@@ -83,3 +83,43 @@ flowchart TD
      "pickupLon": -122.4180,
      "distanceMeters": 126.5,
      "status": "OFFERED",
+     "matchedAt": 1718000005120
+   }
+   ```
+
+### B. Redis Spatial Key Layout
+* `cell:<h3_cell_hex>:drivers` $\to$ **Set** of `driver_id`s currently residing in that hexagon.
+* `driver:<driver_id>` $\to$ **Hash** storing `{lat, lon, status, h3_cell, last_ping}` with a short TTL (e.g. 15s) for automatic eviction if pings stop.
+
+---
+
+## 3. Phased Implementation Roadmap
+
+### Phase 1: Local Infrastructure Setup
+- Create project directory: `ride-hailing-system/`
+- Set up `docker-compose.yml`:
+  - **Kafka** (KRaft mode, single-node, port 9092)
+  - **Redis** (alpine, port 6379)
+- Verify services health and create the required Kafka topics:
+  - `driver-locations`
+  - `ride-requests`
+  - `ride-matches`
+
+### Phase 2: Java Project Setup & Build Configuration
+- Set up Maven or Gradle project structure:
+  - Java 17/21 compatibility.
+  - Dependencies:
+    - `org.apache.flink:flink-streaming-java`
+    - `org.apache.flink:flink-connector-kafka`
+    - `com.uber:h3` (Uber H3 spatial indexing library)
+    - `redis.clients:jedis` (Redis client)
+    - `com.fasterxml.jackson.core:jackson-databind`
+    - `org.slf4j:slf4j-simple`
+
+### Phase 3: Flink Streaming Pipeline (`DriverLocationStreamJob`)
+- Define POJOs and JSON serialization schemas.
+- Implement Flink DAG:
+  1. Read from Kafka topic `driver-locations`.
+  2. Map function: Compute H3 index (resolution 8, $\approx 460\text{m}$ edge length).
+  3. Sink function (`RedisSpatialSink`):
+     - Remove driver from old H3 cell set (if cell changed).
