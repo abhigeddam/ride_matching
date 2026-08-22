@@ -53,3 +53,32 @@ services:
       retries: 5
       start_period: 2s
     restart: unless-stopped
+
+  init-kafka:
+    image: apache/kafka:3.8.0
+    container_name: init-kafka
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    entrypoint: [ "/bin/bash", "-c" ]
+    command: |
+      "
+      set -e
+      echo 'Waiting for Kafka broker readiness...'
+      until /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list >/dev/null 2>&1; do
+        sleep 1
+      done
+      echo 'Kafka broker is ready. Creating mandatory topics...'
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic driver-locations --partitions 1 --replication-factor 1
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic ride-requests --partitions 1 --replication-factor 1
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists --topic ride-matches --partitions 1 --replication-factor 1
+      echo 'Mandatory Kafka topics initialized successfully:'
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list
+      "
+    restart: "no"
+
+volumes:
+  kafka_data:
+    driver: local
