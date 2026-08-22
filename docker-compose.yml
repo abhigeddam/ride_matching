@@ -28,3 +28,28 @@ services:
       CLUSTER_ID: '4L622nShTZaIO4FsITLqqA'
       KAFKA_LOG_DIRS: '/var/lib/kafka/data'
 
+      # JVM Heap Constraints
+      KAFKA_HEAP_OPTS: '-Xms256m -Xmx512m'
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "256mb", "--maxmemory-policy", "noeviction"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+      start_period: 2s
+    restart: unless-stopped
