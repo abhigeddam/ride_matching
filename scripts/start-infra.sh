@@ -73,3 +73,80 @@ INIT_STATUS=$(docker inspect init-kafka --format '{{.State.ExitCode}}' 2>/dev/nu
 
 if [ "$KAFKA_STATUS" != "healthy" ]; then
   echo "FAIL: Kafka container health status is '${KAFKA_STATUS}', expected 'healthy'." >&2
+  exit 1
+fi
+echo "PASS: Kafka is healthy."
+
+if [ "$REDIS_STATUS" != "healthy" ]; then
+  echo "FAIL: Redis container health status is '${REDIS_STATUS}', expected 'healthy'." >&2
+  exit 1
+fi
+echo "PASS: Redis is healthy."
+
+if [ "$INIT_STATUS" != "0" ]; then
+  echo "FAIL: init-kafka exit code is '${INIT_STATUS}', expected '0'." >&2
+  exit 1
+fi
+echo "PASS: init-kafka completed with exit code 0."
+
+# 4b. Redis PING verification
+echo "--> Verifying Redis responsiveness:"
+REDIS_PING=$(docker compose exec -T redis redis-cli ping | tr -d '\r')
+if [ "$REDIS_PING" != "PONG" ]; then
+  echo "FAIL: Redis ping returned '${REDIS_PING}', expected 'PONG'." >&2
+  exit 1
+fi
+echo "PASS: Redis responded with PONG."
+
+# 4c. Kafka Topics Verification
+echo "--> Verifying mandatory Kafka topics exist:"
+TOPICS_OUTPUT=$(docker compose exec -T kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list)
+
+MANDATORY_TOPICS=("driver-locations" "ride-requests" "ride-matches")
+for topic in "${MANDATORY_TOPICS[@]}"; do
+  if echo "$TOPICS_OUTPUT" | grep -qx "$topic"; then
+    echo "PASS: Topic '${topic}' exists."
+  else
+    echo "FAIL: Mandatory topic '${topic}' is missing from Kafka." >&2
+    exit 1
+  fi
+done
+
+# 4d. Kafka Topic Partition and Replication Factor Verification
+echo "--> Verifying partition counts and replication factors:"
+for topic in "${MANDATORY_TOPICS[@]}"; do
+  DESCRIBE_OUTPUT=$(docker compose exec -T kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --describe --topic "$topic")
+  if echo "$DESCRIBE_OUTPUT" | grep -q "PartitionCount: 1" && echo "$DESCRIBE_OUTPUT" | grep -q "ReplicationFactor: 1"; then
+    echo "PASS: Topic '${topic}' has PartitionCount=1 and ReplicationFactor=1."
+  else
+    echo "FAIL: Topic '${topic}' does not match expected partition/replication spec:" >&2
+    echo "$DESCRIBE_OUTPUT" >&2
+    exit 1
+  fi
+done
+
+# 4e. End-to-End Produce and Consume Smoke Test
+echo "--> Executing end-to-end Kafka produce & consume smoke test:"
+TEST_PAYLOAD='{"driverId":"verify_probe_01","latitude":37.7749,"longitude":-122.4194,"status":"AVAILABLE","bearing":90.0,"timestamp":1718000000000}'
+
+echo "$TEST_PAYLOAD" | docker compose exec -T kafka /opt/kafka/bin/kafka-console-producer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic driver-locations
+
+CONSUMED_MESSAGE=$(docker compose exec -T kafka /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic driver-locations \
+  --from-beginning \
+  --max-messages 1 \
+  --timeout-ms 5000 | grep "verify_probe_01" | head -n 1 | tr -d '\r')
+
+if [ -z "$CONSUMED_MESSAGE" ]; then
+  echo "FAIL: No message consumed containing verify_probe_01 from driver-locations within timeout." >&2
+  exit 1
+fi
+echo "PASS: Successfully produced and consumed event from driver-locations: ${CONSUMED_MESSAGE}"
+
+echo "============================================================"
+echo " Infrastructure initialization and verification SUCCESSFUL! "
+echo "============================================================"
+exit 0
