@@ -78,4 +78,30 @@ public class DriverLocationPing implements Serializable {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DriverLocationPing that = (DriverLocationPing) o;
+        return Double.compare(that.latitude, latitude) == 0 &&
+                Double.compare(that.longitude, longitude) == 0 &&
+                Double.compare(that.bearing, bearing) == 0 &&
+                timestamp == that.timestamp &&
+                Objects.equals(driverId, that.driverId) &&
+                Objects.equals(status, that.status);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(driverId, latitude, longitude, status, bearing, timestamp);
+    }
+
+    @Override
+    public String toString() {
+        return "DriverLocationPing{" +
+                "driverId='" + driverId + '\'' +
+                ", latitude=" + latitude +
+                ", longitude=" + longitude +
+                ", status='" + status + '\'' +
+                ", bearing=" + bearing +
+                ", timestamp=" + timestamp +
+                '}';
+    }
 }
