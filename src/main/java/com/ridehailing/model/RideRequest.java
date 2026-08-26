@@ -48,4 +48,48 @@ public class RideRequest implements Serializable {
     public void setPickupLat(double pickupLat) {
         this.pickupLat = pickupLat;
     }
+
+    public double getPickupLon() {
+        return pickupLon;
+    }
+
+    public void setPickupLon(double pickupLon) {
+        this.pickupLon = pickupLon;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RideRequest that = (RideRequest) o;
+        return Double.compare(that.pickupLat, pickupLat) == 0 &&
+                Double.compare(that.pickupLon, pickupLon) == 0 &&
+                timestamp == that.timestamp &&
+                Objects.equals(requestId, that.requestId) &&
+                Objects.equals(riderId, that.riderId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(requestId, riderId, pickupLat, pickupLon, timestamp);
+    }
+
+    @Override
+    public String toString() {
+        return "RideRequest{" +
+                "requestId='" + requestId + '\'' +
+                ", riderId='" + riderId + '\'' +
+                ", pickupLat=" + pickupLat +
+                ", pickupLon=" + pickupLon +
+                ", timestamp=" + timestamp +
+                '}';
+    }
 }
