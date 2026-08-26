@@ -58,4 +58,54 @@ public class RideMatch implements Serializable {
 
     public void setDriverId(String driverId) {
         this.driverId = driverId;
+    }
+
+    public double getDriverLat() {
+        return driverLat;
+    }
+
+    public void setDriverLat(double driverLat) {
+        this.driverLat = driverLat;
+    }
+
+    public double getDriverLon() {
+        return driverLon;
+    }
+
+    public void setDriverLon(double driverLon) {
+        this.driverLon = driverLon;
+    }
+
+    public double getPickupLat() {
+        return pickupLat;
+    }
+
+    public void setPickupLat(double pickupLat) {
+        this.pickupLat = pickupLat;
+    }
+
+    public double getPickupLon() {
+        return pickupLon;
+    }
+
+    public void setPickupLon(double pickupLon) {
+        this.pickupLon = pickupLon;
+    }
+
+    public double getDistanceMeters() {
+        return distanceMeters;
+    }
+
+    public void setDistanceMeters(double distanceMeters) {
+        this.distanceMeters = distanceMeters;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
 }
