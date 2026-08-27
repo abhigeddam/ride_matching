@@ -14,4 +14,11 @@ public class JsonUtil {
     public static String toJson(Object obj) {
         try {
             return MAPPER.writeValueAsString(obj);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to serialize object to JSON: " + obj, e);
+        }
+    }
+
+    public static <T> T fromJson(String json, Class<T> clazz) {
+        try {
 }
