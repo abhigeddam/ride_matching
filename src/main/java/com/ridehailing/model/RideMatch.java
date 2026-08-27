@@ -108,4 +108,49 @@ public class RideMatch implements Serializable {
         this.status = status;
     }
 
+    public long getMatchedAt() {
+        return matchedAt;
+    }
+
+    public void setMatchedAt(long matchedAt) {
+        this.matchedAt = matchedAt;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RideMatch that = (RideMatch) o;
+        return Double.compare(that.driverLat, driverLat) == 0 &&
+                Double.compare(that.driverLon, driverLon) == 0 &&
+                Double.compare(that.pickupLat, pickupLat) == 0 &&
+                Double.compare(that.pickupLon, pickupLon) == 0 &&
+                Double.compare(that.distanceMeters, distanceMeters) == 0 &&
+                matchedAt == that.matchedAt &&
+                Objects.equals(requestId, that.requestId) &&
+                Objects.equals(riderId, that.riderId) &&
+                Objects.equals(driverId, that.driverId) &&
+                Objects.equals(status, that.status);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(requestId, riderId, driverId, driverLat, driverLon, pickupLat, pickupLon, distanceMeters, status, matchedAt);
+    }
+
+    @Override
+    public String toString() {
+        return "RideMatch{" +
+                "requestId='" + requestId + '\'' +
+                ", riderId='" + riderId + '\'' +
+                ", driverId='" + driverId + '\'' +
+                ", driverLat=" + driverLat +
+                ", driverLon=" + driverLon +
+                ", pickupLat=" + pickupLat +
+                ", pickupLon=" + pickupLon +
+                ", distanceMeters=" + distanceMeters +
+                ", status='" + status + '\'' +
+                ", matchedAt=" + matchedAt +
+                '}';
+    }
 }
