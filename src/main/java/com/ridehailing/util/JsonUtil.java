@@ -21,4 +21,9 @@ public class JsonUtil {
 
     public static <T> T fromJson(String json, Class<T> clazz) {
         try {
+            return MAPPER.readValue(json, clazz);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to deserialize JSON to " + clazz.getSimpleName() + ": " + json, e);
+        }
+    }
 }
