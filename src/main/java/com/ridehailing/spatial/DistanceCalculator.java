@@ -12,5 +12,10 @@ public class DistanceCalculator {
         double radLat1 = Math.toRadians(lat1);
         double radLat2 = Math.toRadians(lat2);
 
+        double a = Math.sin(dLat / 2.0) * Math.sin(dLat / 2.0) +
+                   Math.cos(radLat1) * Math.cos(radLat2) *
+                   Math.sin(dLon / 2.0) * Math.sin(dLon / 2.0);
+        double c = 2.0 * Math.atan2(Math.sqrt(a), Math.sqrt(1.0 - a));
+        return EARTH_RADIUS_METERS * c;
     }
 }
