@@ -16,4 +16,14 @@ public class H3SpatialIndex implements Serializable {
             try {
                 h3 = H3Core.newInstance();
             } catch (IOException e) {
+                throw new RuntimeException("Failed to initialize Uber H3Core native library", e);
+            }
+        }
+        return h3;
+    }
+
+    public static String geoToH3Address(double lat, double lon) {
+        return geoToH3Address(lat, lon, DEFAULT_RESOLUTION);
+    }
+
 }
