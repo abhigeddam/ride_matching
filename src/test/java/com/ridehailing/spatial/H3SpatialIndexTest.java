@@ -28,4 +28,9 @@ public class H3SpatialIndexTest {
         String centerCell = H3SpatialIndex.geoToH3Address(lat, lon);
         List<String> kRing1 = H3SpatialIndex.getKRing(centerCell, 1);
 
+        assertNotNull(kRing1);
+        // k-ring 1 of a hexagon is always 1 + 6 = 7 cells
+        assertEquals(7, kRing1.size(), "k-ring 1 must contain exactly 7 cells (center + 6 neighbors)");
+        assertTrue(kRing1.contains(centerCell), "k-ring must contain the origin cell");
+    }
 }
