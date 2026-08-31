@@ -26,4 +26,11 @@ public class H3SpatialIndex implements Serializable {
         return geoToH3Address(lat, lon, DEFAULT_RESOLUTION);
     }
 
+    public static String geoToH3Address(double lat, double lon, int res) {
+        return getH3Instance().latLngToCellAddress(lat, lon, res);
+    }
+
+    public static List<String> getKRing(String h3Address, int k) {
+        return getH3Instance().gridDisk(h3Address, k);
+    }
 }
