@@ -23,4 +23,17 @@ public class RedisPoolManager {
 
                     JedisPoolConfig config = new JedisPoolConfig();
                     config.setMaxTotal(64);
+                    config.setMaxIdle(16);
+                    config.setMinIdle(4);
+                    config.setTestOnBorrow(true);
+                    config.setMaxWait(Duration.ofMillis(3000));
+
+                    pool = new JedisPool(config, host, port, 5000);
+                }
+            }
+        }
+        return pool;
+    }
+
+    public static Jedis getResource() {
 }
