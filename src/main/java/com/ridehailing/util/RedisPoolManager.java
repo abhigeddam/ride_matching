@@ -36,4 +36,12 @@ public class RedisPoolManager {
     }
 
     public static Jedis getResource() {
+        return getPool().getResource();
+    }
+
+    public static void closePool() {
+        if (pool != null && !pool.isClosed()) {
+            pool.close();
+        }
+    }
 }
