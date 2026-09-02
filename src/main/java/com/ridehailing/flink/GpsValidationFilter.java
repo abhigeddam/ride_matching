@@ -23,4 +23,6 @@ public class GpsValidationFilter implements FilterFunction<DriverLocationPing> {
         if (lon < -180.0 || lon > 180.0) {
             return false;
         }
+        return true;
+    }
 }
