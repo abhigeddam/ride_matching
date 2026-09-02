@@ -16,4 +16,11 @@ public class GpsValidationFilter implements FilterFunction<DriverLocationPing> {
         }
         double lat = ping.getLatitude();
         double lon = ping.getLongitude();
+
+        if (lat < -90.0 || lat > 90.0) {
+            return false;
+        }
+        if (lon < -180.0 || lon > 180.0) {
+            return false;
+        }
 }
