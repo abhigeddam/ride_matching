@@ -20,4 +20,13 @@ public class DriverLocationDeserializationSchema implements DeserializationSchem
             String json = new String(message, StandardCharsets.UTF_8);
             return JsonUtil.fromJson(json, DriverLocationPing.class);
         } catch (Exception e) {
+            // Drop malformed messages gracefully
+            return null;
+        }
+    }
+
+    @Override
+    public boolean isEndOfStream(DriverLocationPing nextElement) {
+        return false;
+    }
 }
