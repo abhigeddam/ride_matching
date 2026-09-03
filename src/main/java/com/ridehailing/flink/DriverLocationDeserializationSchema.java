@@ -29,4 +29,9 @@ public class DriverLocationDeserializationSchema implements DeserializationSchem
     public boolean isEndOfStream(DriverLocationPing nextElement) {
         return false;
     }
+
+    @Override
+    public TypeInformation<DriverLocationPing> getProducedType() {
+        return TypeInformation.of(DriverLocationPing.class);
+    }
 }
