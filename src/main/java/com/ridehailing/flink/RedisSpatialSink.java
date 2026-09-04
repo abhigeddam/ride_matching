@@ -53,4 +53,11 @@ public class RedisSpatialSink extends RichSinkFunction<DriverLocationPing> {
         driverData.put("last_ping", String.valueOf(ping.getTimestamp()));
 
         jedis.hset(driverKey, driverData);
+        jedis.expire(driverKey, DRIVER_TTL_SECONDS);
+    }
+
+    @Override
+    public void close() throws Exception {
+        if (jedis != null) {
+            jedis.close();
 }
