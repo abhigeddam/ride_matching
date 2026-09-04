@@ -26,4 +26,21 @@ public class RedisSpatialSink extends RichSinkFunction<DriverLocationPing> {
     public void invoke(DriverLocationPing ping, Context context) throws Exception {
         if (ping == null || ping.getDriverId() == null) {
             return;
+        }
+
+        String driverId = ping.getDriverId();
+        String newCell = H3SpatialIndex.geoToH3Address(ping.getLatitude(), ping.getLongitude());
+
+        String driverKey = "driver:" + driverId;
+        String oldCell = jedis.hget(driverKey, "h3_cell");
+
+        // Cell transition: if moved from old cell, remove from old cell's active driver set
+        if (oldCell != null && !oldCell.equals(newCell)) {
+            jedis.srem("cell:" + oldCell + ":drivers", driverId);
+        }
+
+        // Add to new cell's active driver set
+        jedis.sadd("cell:" + newCell + ":drivers", driverId);
+
+        // Update driver state hash
 }
