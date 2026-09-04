@@ -43,4 +43,14 @@ public class RedisSpatialSink extends RichSinkFunction<DriverLocationPing> {
         jedis.sadd("cell:" + newCell + ":drivers", driverId);
 
         // Update driver state hash
+        Map<String, String> driverData = new HashMap<>();
+        driverData.put("driverId", driverId);
+        driverData.put("latitude", String.valueOf(ping.getLatitude()));
+        driverData.put("longitude", String.valueOf(ping.getLongitude()));
+        driverData.put("status", ping.getStatus() != null ? ping.getStatus() : "AVAILABLE");
+        driverData.put("bearing", String.valueOf(ping.getBearing()));
+        driverData.put("h3_cell", newCell);
+        driverData.put("last_ping", String.valueOf(ping.getTimestamp()));
+
+        jedis.hset(driverKey, driverData);
 }
