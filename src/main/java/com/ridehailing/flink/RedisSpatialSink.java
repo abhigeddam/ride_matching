@@ -63,4 +63,5 @@ public class RedisSpatialSink extends RichSinkFunction<DriverLocationPing> {
             jedis = null;
         }
         super.close();
+    }
 }
