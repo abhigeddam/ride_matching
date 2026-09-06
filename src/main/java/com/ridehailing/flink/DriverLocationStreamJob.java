@@ -23,4 +23,19 @@ public class DriverLocationStreamJob {
                 System.getenv("DRIVER_LOCATIONS_TOPIC") : "driver-locations";
 
         LOG.info("Configured Kafka Bootstrap: {}, Topic: {}", kafkaBootstrap, topic);
+
+        KafkaSource<DriverLocationPing> kafkaSource = KafkaSource.<DriverLocationPing>builder()
+                .setBootstrapServers(kafkaBootstrap)
+                .setTopics(topic)
+                .setGroupId("flink-driver-locations-consumer")
+                .setStartingOffsets(OffsetsInitializer.latest())
+                .setValueOnlyDeserializer(new DriverLocationDeserializationSchema())
+                .build();
+
+        DataStream<DriverLocationPing> stream = env.fromSource(
+                kafkaSource,
+                WatermarkStrategy.noWatermarks(),
+                "Kafka Driver Locations Source"
+        );
+
 }
