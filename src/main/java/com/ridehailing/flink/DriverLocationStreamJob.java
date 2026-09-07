@@ -38,4 +38,13 @@ public class DriverLocationStreamJob {
                 "Kafka Driver Locations Source"
         );
 
+        // Filter and sink to Redis
+        stream.filter(new GpsValidationFilter())
+              .name("GPS Validation Filter")
+              .addSink(new RedisSpatialSink())
+              .name("Redis Spatial Index Sink");
+
+        LOG.info("Executing Flink Topology...");
+        env.execute("DriverLocationStreamJob");
+    }
 }
