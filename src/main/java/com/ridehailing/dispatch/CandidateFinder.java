@@ -53,4 +53,24 @@ public class CandidateFinder {
         List<String> targetCells = H3SpatialIndex.getKRing(pickupCell, 1);
 
         Candidate bestCandidate = null;
+        Set<String> checkedDriverIds = new HashSet<>();
+
+        for (String cell : targetCells) {
+            String cellKey = "cell:" + cell + ":drivers";
+            Set<String> driverIds = jedis.smembers(cellKey);
+            if (driverIds == null || driverIds.isEmpty()) {
+                continue;
+            }
+
+            for (String driverId : driverIds) {
+                if (!checkedDriverIds.add(driverId)) {
+                    continue; // Already evaluated
+                }
+
+                String driverKey = "driver:" + driverId;
+                Map<String, String> driverData = jedis.hgetAll(driverKey);
+
+                // Check if driver hash has expired or is missing
+                if (driverData == null || driverData.isEmpty()) {
+                    // Stale eviction: clean up orphaned set reference
 }
