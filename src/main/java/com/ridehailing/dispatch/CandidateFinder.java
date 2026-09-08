@@ -73,4 +73,28 @@ public class CandidateFinder {
                 // Check if driver hash has expired or is missing
                 if (driverData == null || driverData.isEmpty()) {
                     // Stale eviction: clean up orphaned set reference
+                    jedis.srem(cellKey, driverId);
+                    continue;
+                }
+
+                String status = driverData.get("status");
+                if (status == null || !"AVAILABLE".equalsIgnoreCase(status)) {
+                    continue;
+                }
+
+                try {
+                    double driverLat = Double.parseDouble(driverData.get("latitude"));
+                    double driverLon = Double.parseDouble(driverData.get("longitude"));
+
+                    double distance = DistanceCalculator.haversineMeters(pickupLat, pickupLon, driverLat, driverLon);
+
+                    if (bestCandidate == null || distance < bestCandidate.getDistanceMeters()) {
+                        bestCandidate = new Candidate(driverId, driverLat, driverLon, distance, cell);
+                    }
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+
+        return Optional.ofNullable(bestCandidate);
+    }
 }
