@@ -33,4 +33,24 @@ public class CandidateFinder {
 
         public double getLongitude() {
             return longitude;
+        }
+
+        public double getDistanceMeters() {
+            return distanceMeters;
+        }
+
+        public String getCell() {
+            return cell;
+        }
+    }
+
+    /**
+     * Searches Redis for the nearest available driver across the pickup H3 cell and its 6 neighbors (k-ring 1).
+     * Automatically evicts stale drivers whose hashes have expired.
+     */
+    public static Optional<Candidate> findNearestAvailableDriver(Jedis jedis, double pickupLat, double pickupLon) {
+        String pickupCell = H3SpatialIndex.geoToH3Address(pickupLat, pickupLon);
+        List<String> targetCells = H3SpatialIndex.getKRing(pickupCell, 1);
+
+        Candidate bestCandidate = null;
 }
