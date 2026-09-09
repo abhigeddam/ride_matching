@@ -88,4 +88,44 @@ public class RideMatchingService implements Runnable {
     }
 
     public void processRequest(String requestJson, KafkaProducer<String, String> producer) {
+        if (requestJson == null || requestJson.trim().isEmpty()) {
+            return;
+        }
+
+        RideRequest request;
+        try {
+            request = JsonUtil.fromJson(requestJson, RideRequest.class);
+        } catch (Exception e) {
+            LOG.warn("Could not parse ride request JSON: {}", requestJson, e);
+            return;
+        }
+
+        LOG.info("Processing RideRequest: requestId={}, riderId={}, lat={}, lon={}",
+                request.getRequestId(), request.getRiderId(), request.getPickupLat(), request.getPickupLon());
+
+        try (Jedis jedis = RedisPoolManager.getResource()) {
+            Optional<CandidateFinder.Candidate> candidateOpt =
+                    CandidateFinder.findNearestAvailableDriver(jedis, request.getPickupLat(), request.getPickupLon());
+
+            if (candidateOpt.isPresent()) {
+                CandidateFinder.Candidate candidate = candidateOpt.get();
+                LOG.info("Matched request {} with nearest driver {} at distance {}m in cell {}",
+                        request.getRequestId(), candidate.getDriverId(),
+                        String.format("%.1f", candidate.getDistanceMeters()), candidate.getCell());
+
+                // Mark driver as reserved/offered
+                jedis.hset("driver:" + candidate.getDriverId(), "status", "OFFERED");
+
+                RideMatch match = new RideMatch(
+                        request.getRequestId(),
+                        request.getRiderId(),
+                        candidate.getDriverId(),
+                        candidate.getLatitude(),
+                        candidate.getLongitude(),
+                        request.getPickupLat(),
+                        request.getPickupLon(),
+                        Math.round(candidate.getDistanceMeters() * 10.0) / 10.0,
+                        "OFFERED",
+                        System.currentTimeMillis()
+                );
 }
