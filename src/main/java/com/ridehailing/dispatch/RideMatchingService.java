@@ -128,4 +128,28 @@ public class RideMatchingService implements Runnable {
                         "OFFERED",
                         System.currentTimeMillis()
                 );
+
+                String matchJson = JsonUtil.toJson(match);
+                producer.send(new ProducerRecord<>(matchTopic, request.getRequestId(), matchJson),
+                        (metadata, exception) -> {
+                            if (exception != null) {
+                                LOG.error("Failed to publish match to Kafka topic {}: {}", matchTopic, matchJson, exception);
+                            } else {
+                                LOG.info("Published match to {}: partition={}, offset={}",
+                                        matchTopic, metadata.partition(), metadata.offset());
+                            }
+                        });
+            } else {
+                LOG.info("No available drivers found in 7-cell neighborhood for request {}", request.getRequestId());
+            }
+        } catch (Exception e) {
+            LOG.error("Error matching ride request {}", request.getRequestId(), e);
+        }
+    }
+
+    public static void main(String[] args) {
+        RideMatchingService service = new RideMatchingService();
+        Runtime.getRuntime().addShutdownHook(new Thread(service::stop));
+        service.run();
+    }
 }
