@@ -43,4 +43,49 @@ public class RideMatchingService implements Runnable {
         this.kafkaBootstrap = kafkaBootstrap;
         this.requestTopic = requestTopic;
         this.matchTopic = matchTopic;
+    }
+
+    public void stop() {
+        running.set(false);
+    }
+
+    @Override
+    public void run() {
+        LOG.info("Starting RideMatchingService. Kafka: {}, Request Topic: {}, Match Topic: {}",
+                kafkaBootstrap, requestTopic, matchTopic);
+
+        Properties consumerProps = new Properties();
+        consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBootstrap);
+        consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "ride-matching-service-group");
+        consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
+        consumerProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "true");
+
+        Properties producerProps = new Properties();
+        producerProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaBootstrap);
+        producerProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        producerProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        producerProps.put(ProducerConfig.ACKS_CONFIG, "1");
+
+        try (KafkaConsumer<String, String> consumer = new KafkaConsumer<>(consumerProps);
+             KafkaProducer<String, String> producer = new KafkaProducer<>(producerProps)) {
+
+            consumer.subscribe(Collections.singletonList(requestTopic));
+            LOG.info("Subscribed to {}", requestTopic);
+
+            while (running.get()) {
+                ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(200));
+                for (ConsumerRecord<String, String> record : records) {
+                    processRequest(record.value(), producer);
+                }
+            }
+        } catch (Exception e) {
+            LOG.error("RideMatchingService encountered an error", e);
+        } finally {
+            LOG.info("RideMatchingService stopped.");
+        }
+    }
+
+    public void processRequest(String requestJson, KafkaProducer<String, String> producer) {
 }
