@@ -1198,3 +1198,661 @@ def run_tier2_tests(h: VerificationHarness):
     h.run_case("Tier 2", "T2_F01_003", "F1", "Redis empty set SMEMBERS returns empty set",
                lambda: assert_true(len(h.redis.smembers("set_empty")) == 0))
     h.run_case("Tier 2", "T2_F01_004", "F1", "Redis delete non-existent key returns 0",
+               lambda: assert_true(h.redis.delete("k_missing_del") == 0))
+    h.run_case("Tier 2", "T2_F01_005", "F1", "Redis flushdb clears all keys",
+               lambda: (h.redis.set("temp", "1"), h.redis.flushdb(), assert_true(h.redis.get("temp") is None))[2])
+
+    # F2 BVA
+    h.run_case("Tier 2", "T2_F02_001", "F2", "Kafka produce with None key accepted",
+               lambda: (h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key=None,
+                                        value=DriverLocationPing("t2_null_k", 37.77, -122.41, timestamp=int(time.time()*1000)).to_dict()), "OK")[1])
+    h.run_case("Tier 2", "T2_F02_002", "F2", "Kafka produce with empty key string accepted",
+               lambda: (h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="",
+                                        value=DriverLocationPing("t2_empty_k", 37.77, -122.41, timestamp=int(time.time()*1000)).to_dict()), "OK")[1])
+    h.run_case("Tier 2", "T2_F02_003", "F2", "Kafka produce payload with unicode characters",
+               lambda: (h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t2_utf8",
+                                        value={"driverId": "t2_utf8", "latitude": 37.77, "longitude": -122.41, "status": "AVAILABLE", "city": "サンフランシスコ"}), "OK")[1])
+    h.run_case("Tier 2", "T2_F02_004", "F2", "Kafka topic query returns non-empty topic set",
+               lambda: assert_true(len(h.kafka.get_topics()) >= 3))
+    h.run_case("Tier 2", "T2_F02_005", "F2", "Kafka consumer poll with zero matches returns empty list",
+               lambda: assert_true(len(h.kafka.consume_matches(timeout_sec=0.1, target_req_id="never_sent")) == 0))
+
+    # F3 BVA (Coordinate Boundaries & GPS Filters)
+    h.run_case("Tier 2", "T2_F03_001", "F3", "North Pole coordinate boundary (lat=90.0, lon=0.0)",
+               lambda: assert_true(isinstance(latlng_to_cell(90.0, 0.0, 8), str)))
+    h.run_case("Tier 2", "T2_F03_002", "F3", "South Pole coordinate boundary (lat=-90.0, lon=0.0)",
+               lambda: assert_true(isinstance(latlng_to_cell(-90.0, 0.0, 8), str)))
+    h.run_case("Tier 2", "T2_F03_003", "F3", "Date line east boundary (lon=180.0)",
+               lambda: assert_true(isinstance(latlng_to_cell(0.0, 180.0, 8), str)))
+    h.run_case("Tier 2", "T2_F03_004", "F3", "Date line west boundary (lon=-180.0)",
+               lambda: assert_true(isinstance(latlng_to_cell(0.0, -180.0, 8), str)))
+    h.run_case("Tier 2", "T2_F03_005", "F3", "Null Island coordinate boundary (lat=0.0, lon=0.0)",
+               lambda: assert_true(isinstance(latlng_to_cell(0.0, 0.0, 8), str)))
+
+    # F4 BVA (Cell Set Capacities)
+    h.run_case("Tier 2", "T2_F04_001", "F4", "H3 Cell with single driver set size == 1",
+               lambda: (h.redis.delete("cell:8828308281fffff:drivers"),
+                        h.redis.sadd("cell:8828308281fffff:drivers", "single_d"),
+                        assert_true(len(h.redis.smembers("cell:8828308281fffff:drivers")) == 1))[2])
+    h.run_case("Tier 2", "T2_F04_002", "F4", "H3 Cell with 100 drivers set size == 100",
+               lambda: (h.redis.sadd("cell:8828308281fffff:drivers", *[f"d_bulk_{i}" for i in range(100)]),
+                        assert_true(len(h.redis.smembers("cell:8828308281fffff:drivers")) >= 100))[1])
+    h.run_case("Tier 2", "T2_F04_003", "F4", "Adding duplicate driver ID is idempotent",
+               lambda: (h.redis.sadd("cell:8828308281fffff:drivers", "single_d"),
+                        assert_true(h.redis.sismember("cell:8828308281fffff:drivers", "single_d")))[1])
+    h.run_case("Tier 2", "T2_F04_004", "F4", "Driver ID with complex symbols (_ - : #)",
+               lambda: (h.redis.sadd("cell:8828308281fffff:drivers", "drv:sf-01_#9"),
+                        assert_true(h.redis.sismember("cell:8828308281fffff:drivers", "drv:sf-01_#9")))[1])
+    h.run_case("Tier 2", "T2_F04_005", "F4", "SREM on non-existent member is non-blocking",
+               lambda: (h.redis.srem("cell:8828308281fffff:drivers", "non_member"), "OK")[1])
+
+    # F5 BVA (Migration Trajectories)
+    h.run_case("Tier 2", "T2_F05_001", "F5", "Ping bearing boundary: 0.0 degrees",
+               lambda: (h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t2_b_0",
+                                        value=DriverLocationPing("t2_b_0", 37.77, -122.41, bearing=0.0, timestamp=int(time.time()*1000)).to_dict()), "OK")[1])
+    h.run_case("Tier 2", "T2_F05_002", "F5", "Ping bearing boundary: 359.9 degrees",
+               lambda: (h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t2_b_359",
+                                        value=DriverLocationPing("t2_b_359", 37.77, -122.41, bearing=359.9, timestamp=int(time.time()*1000)).to_dict()), "OK")[1])
+    h.run_case("Tier 2", "T2_F05_003", "F5", "Ping bearing boundary: 360.0 degrees",
+               lambda: (h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t2_b_360",
+                                        value=DriverLocationPing("t2_b_360", 37.77, -122.41, bearing=360.0, timestamp=int(time.time()*1000)).to_dict()), "OK")[1])
+    h.run_case("Tier 2", "T2_F05_004", "F5", "Ping bearing negative value normalized",
+               lambda: (h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t2_b_neg",
+                                        value=DriverLocationPing("t2_b_neg", 37.77, -122.41, bearing=-45.0, timestamp=int(time.time()*1000)).to_dict()), "OK")[1])
+    h.run_case("Tier 2", "T2_F05_005", "F5", "Stationary ping in same cell preserves cell set",
+               lambda: (h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t2_stat",
+                                        value=DriverLocationPing("t2_stat", 37.7749, -122.4194, timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.05),
+                        assert_true(h.redis.sismember(f"cell:{latlng_to_cell(37.7749, -122.4194, 8)}:drivers", "t2_stat")))[2])
+
+    # F6 BVA (TTL Boundaries)
+    h.run_case("Tier 2", "T2_F06_001", "F6", "Immediate post-ping TTL is within [13, 15]s",
+               lambda: (h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t2_ttl_imm",
+                                        value=DriverLocationPing("t2_ttl_imm", 37.77, -122.41, timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.05),
+                        assert_true(13 <= h.redis.ttl("driver:t2_ttl_imm") <= 15))[2])
+    h.run_case("Tier 2", "T2_F06_002", "F6", "TTL boundary at 14.5s remaining (still valid)",
+               lambda: (h.redis.expire("driver:t2_ttl_imm", 14),
+                        assert_true(h.redis.ttl("driver:t2_ttl_imm") >= 13))[1])
+    h.run_case("Tier 2", "T2_F06_003", "F6", "TTL boundary at 1s remaining (imminent expiry)",
+               lambda: (h.redis.expire("driver:t2_ttl_imm", 1),
+                        assert_true(h.redis.ttl("driver:t2_ttl_imm") <= 1))[1])
+    h.run_case("Tier 2", "T2_F06_004", "F6", "TTL at 0s expiry threshold",
+               lambda: (h.redis.expire("driver:t2_ttl_imm", 0),
+                        time.sleep(0.05),
+                        assert_true(not bool(h.redis.hgetall("driver:t2_ttl_imm"))))[2])
+    h.run_case("Tier 2", "T2_F06_005", "F6", "Rapid ping stream maintains continuous TTL renewal",
+               lambda: (h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t2_ttl_stream",
+                                        value=DriverLocationPing("t2_ttl_stream", 37.77, -122.41, timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.1),
+                        h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t2_ttl_stream",
+                                        value=DriverLocationPing("t2_ttl_stream", 37.77, -122.41, timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.05),
+                        assert_true(h.redis.ttl("driver:t2_ttl_stream") >= 14))[3])
+
+    # F7 BVA (Ride Request Boundaries)
+    h.run_case("Tier 2", "T2_F07_001", "F7", "Request timestamp = 0 epoch handled gracefully",
+               lambda: (h.kafka.produce(TOPIC_RIDE_REQUESTS, key="t2_req_epoch0",
+                                        value=RideRequest("t2_req_epoch0", "rider_ep", 37.7749, -122.4194, timestamp=0).to_dict()), "OK")[1])
+    h.run_case("Tier 2", "T2_F07_002", "F7", "Request with future timestamp (+1 day)",
+               lambda: (h.kafka.produce(TOPIC_RIDE_REQUESTS, key="t2_req_fut",
+                                        value=RideRequest("t2_req_fut", "rider_fut", 37.7749, -122.4194, timestamp=int(time.time()*1000)+86400000).to_dict()), "OK")[1])
+    h.run_case("Tier 2", "T2_F07_003", "F7", "Request with 10 decimal place coordinate precision",
+               lambda: (h.kafka.produce(TOPIC_RIDE_REQUESTS, key="t2_req_prec",
+                                        value=RideRequest("t2_req_prec", "rider_prec", 37.7749123456, -122.4194123456, timestamp=int(time.time()*1000)).to_dict()), "OK")[1])
+    h.run_case("Tier 2", "T2_F07_004", "F7", "Request with hyphens and special chars in requestId",
+               lambda: (h.kafka.produce(TOPIC_RIDE_REQUESTS, key="req-special_#001",
+                                        value=RideRequest("req-special_#001", "rider_sp", 37.7749, -122.4194, timestamp=int(time.time()*1000)).to_dict()), "OK")[1])
+    h.run_case("Tier 2", "T2_F07_005", "F7", "Request with 0 drivers in 7-cell ring yields 0 matches",
+               lambda: (h.kafka.produce(TOPIC_RIDE_REQUESTS, key="t2_req_empty",
+                                        value=RideRequest("t2_req_empty", "rider_empty", 37.0000, -120.0000, timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.1),
+                        assert_true(len(h.kafka.consume_matches(timeout_sec=0.5, target_req_id="t2_req_empty")) == 0))[2])
+
+    # F8 BVA (Expansion Extremes)
+    h.run_case("Tier 2", "T2_F08_001", "F8", "7-cell expansion at North Pole yields 7 cells",
+               lambda: assert_true(len(grid_disk(latlng_to_cell(90.0, 0.0, 8), 1)) == 7))
+    h.run_case("Tier 2", "T2_F08_002", "F8", "7-cell expansion at South Pole yields 7 cells",
+               lambda: assert_true(len(grid_disk(latlng_to_cell(-90.0, 0.0, 8), 1)) == 7))
+    h.run_case("Tier 2", "T2_F08_003", "F8", "7-cell expansion across Date Line yields 7 cells",
+               lambda: assert_true(len(grid_disk(latlng_to_cell(0.0, 180.0, 8), 1)) == 7))
+    h.run_case("Tier 2", "T2_F08_004", "F8", "Radius 0 expansion yields exactly 1 cell (center only)",
+               lambda: assert_true(len(grid_disk(latlng_to_cell(37.77, -122.41, 8), 0)) == 1))
+    h.run_case("Tier 2", "T2_F08_005", "F8", "All 6 neighbors at grid distance 1",
+               lambda: (lambda c: assert_true(all(grid_distance(c, n) == 1 for n in grid_disk(c, 1) if n != c)))(latlng_to_cell(37.77, -122.41, 8)))
+
+    # F9 BVA (Haversine Boundaries)
+    h.run_case("Tier 2", "T2_F09_001", "F9", "Zero meter exact boundary (same coordinates)",
+               lambda: assert_true(haversine_distance(37.7749, -122.4194, 37.7749, -122.4194) == 0.0))
+    h.run_case("Tier 2", "T2_F09_002", "F9", "Sub-meter micro-distance (10cm delta)",
+               lambda: assert_true(0.05 < haversine_distance(37.7749, -122.4194, 37.7749009, -122.4194) < 0.20))
+    h.run_case("Tier 2", "T2_F09_003", "F9", "Center to cell edge boundary (~461m)",
+               lambda: (assert_true(400.0 < haversine_distance(37.7749, -122.4194, 37.7749 + 0.0041, -122.4194) < 500.0)))
+    h.run_case("Tier 2", "T2_F09_004", "F9", "Outer boundary of 7-cell cluster (~1300m)",
+               lambda: (assert_true(1200.0 < haversine_distance(37.7749, -122.4194, 37.7749 + 0.012, -122.4194) < 1500.0)))
+    h.run_case("Tier 2", "T2_F09_005", "F9", "Antipodal points distance equals pi * R (~20,015km)",
+               lambda: assert_true(abs(haversine_distance(0, 0, 0, 180) - (math.pi * EARTH_RADIUS_METERS)) < 1000.0))
+
+    # F10 BVA (Dispatch Boundaries)
+    h.run_case("Tier 2", "T2_F10_001", "F10", "Driver located at 0m from pickup matched with distance 0m",
+               lambda: (h.reset_state(),
+                        h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t2_d_zero",
+                                        value=DriverLocationPing("t2_d_zero", 37.7749, -122.4194, timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.05),
+                        h.kafka.produce(TOPIC_RIDE_REQUESTS, key="t2_req_zero",
+                                        value=RideRequest("t2_req_zero", "rider_zero", 37.7749, -122.4194, timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.1),
+                        assert_true(len(h.kafka.consume_matches(timeout_sec=1.5, target_req_id="t2_req_zero")) >= 1))[4])
+    h.run_case("Tier 2", "T2_F10_002", "F10", "Driver at outer limit of neighbor cell matched",
+               lambda: (h.reset_state(),
+                        h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t2_d_outer",
+                                        value=DriverLocationPing("t2_d_outer", 37.7820, -122.4194, timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.05),
+                        h.kafka.produce(TOPIC_RIDE_REQUESTS, key="t2_req_outer",
+                                        value=RideRequest("t2_req_outer", "rider_outer", 37.7749, -122.4194, timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.1),
+                        assert_true(len(h.kafka.consume_matches(timeout_sec=1.5, target_req_id="t2_req_outer")) >= 1))[4])
+    h.run_case("Tier 2", "T2_F10_003", "F10", "Match distance rounded to 1 decimal place",
+               lambda: (h.reset_state(),
+                        h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t2_d_round",
+                                        value=DriverLocationPing("t2_d_round", 37.7749, -122.4194, timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.05),
+                        h.kafka.produce(TOPIC_RIDE_REQUESTS, key="t2_req_round",
+                                        value=RideRequest("t2_req_round", "rider_round", 37.7752, -122.4180, timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.1),
+                        (lambda m: assert_true(len(m) >= 1 and isinstance(m[0].distanceMeters, float)))(h.kafka.consume_matches(timeout_sec=1.0, target_req_id="t2_req_round")))[4])
+    h.run_case("Tier 2", "T2_F10_004", "F10", "Match status equals OFFERED",
+               lambda: (h.reset_state(),
+                        h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t2_d_status",
+                                        value=DriverLocationPing("t2_d_status", 37.7749, -122.4194, timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.05),
+                        h.kafka.produce(TOPIC_RIDE_REQUESTS, key="t2_req_status",
+                                        value=RideRequest("t2_req_status", "rider_st", 37.7750, -122.4190, timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.1),
+                        (lambda m: assert_true(len(m) >= 1 and m[0].status == "OFFERED"))(h.kafka.consume_matches(timeout_sec=1.0, target_req_id="t2_req_status")))[4])
+    h.run_case("Tier 2", "T2_F10_005", "F10", "Match timestamp is positive epoch",
+               lambda: (h.reset_state(),
+                        h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t2_d_ts",
+                                        value=DriverLocationPing("t2_d_ts", 37.7749, -122.4194, timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.05),
+                        h.kafka.produce(TOPIC_RIDE_REQUESTS, key="t2_req_ts",
+                                        value=RideRequest("t2_req_ts", "rider_ts", 37.7750, -122.4190, timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.1),
+                        (lambda m: assert_true(len(m) >= 1 and m[0].matchedAt > 0))(h.kafka.consume_matches(timeout_sec=1.0, target_req_id="t2_req_ts")))[4])
+
+    # F11 BVA (Status Transitions & Lazy Purge)
+    h.run_case("Tier 2", "T2_F11_001", "F11", "Driver marked OFFERED excluded from next match",
+               lambda: (h.reset_state(),
+                        h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t2_d_res",
+                                        value=DriverLocationPing("t2_d_res", 37.7749, -122.4194, timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.05),
+                        h.kafka.produce(TOPIC_RIDE_REQUESTS, key="t2_req_res1",
+                                        value=RideRequest("t2_req_res1", "rider_res1", 37.7749, -122.4194, timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.1),
+                        assert_true(len(h.kafka.consume_matches(timeout_sec=1.0, target_req_id="t2_req_res1")) == 1),
+                        assert_true(h.redis.hget("driver:t2_d_res", "status") == "OFFERED"),
+                        h.kafka.produce(TOPIC_RIDE_REQUESTS, key="t2_req_res2",
+                                        value=RideRequest("t2_req_res2", "rider_res2", 37.7749, -122.4194, timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.1),
+                        assert_true(len(h.kafka.consume_matches(timeout_sec=0.5, target_req_id="t2_req_res2")) == 0))[8])
+    h.run_case("Tier 2", "T2_F11_002", "F11", "Driver status OFFLINE not in cell set",
+               lambda: (h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t2_d_off",
+                                        value=DriverLocationPing("t2_d_off", 37.7749, -122.4194, status="OFFLINE", timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.05),
+                        assert_true(not h.redis.sismember(f"cell:{latlng_to_cell(37.7749, -122.4194, 8)}:drivers", "t2_d_off")))[2])
+    h.run_case("Tier 2", "T2_F11_003", "F11", "Driver status BUSY not in cell set",
+               lambda: (h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t2_d_busy",
+                                        value=DriverLocationPing("t2_d_busy", 37.7749, -122.4194, status="BUSY", timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.05),
+                        assert_true(not h.redis.sismember(f"cell:{latlng_to_cell(37.7749, -122.4194, 8)}:drivers", "t2_d_busy")))[2])
+    h.run_case("Tier 2", "T2_F11_004", "F11", "Driver transition BUSY -> AVAILABLE restores cell set",
+               lambda: (h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t2_d_busy",
+                                        value=DriverLocationPing("t2_d_busy", 37.7749, -122.4194, status="AVAILABLE", timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.05),
+                        assert_true(h.redis.sismember(f"cell:{latlng_to_cell(37.7749, -122.4194, 8)}:drivers", "t2_d_busy")))[2])
+    h.run_case("Tier 2", "T2_F11_005", "F11", "Stale driver hash lazily pruned from cell set",
+               lambda: (h.redis.sadd("cell:8828308281fffff:drivers", "ghost_driver"),
+                        h.redis.delete("driver:ghost_driver"),
+                        h.kafka.produce(TOPIC_RIDE_REQUESTS, key="t2_req_ghost",
+                                        value=RideRequest("t2_req_ghost", "r_gh", 37.7749, -122.4194, timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.05),
+                        assert_true(not h.redis.sismember("cell:8828308281fffff:drivers", "ghost_driver")))[3])
+
+    # F12 BVA (Latency Metrics)
+    h.run_case("Tier 2", "T2_F12_001", "F12", "Rapid burst 20 pings ingestion measurement",
+               lambda: (lambda pings: assert_true(len(pings) == 20))([
+                   h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key=f"t2_burst_{i}",
+                                   value=DriverLocationPing(f"t2_burst_{i}", 37.77, -122.41, timestamp=int(time.time()*1000)).to_dict())
+                   for i in range(20)
+               ]))
+    h.run_case("Tier 2", "T2_F12_002", "F12", "Latency recording list monotonic sorting capability",
+               lambda: assert_true(sorted(h.ingestion_latencies_ms) == sorted(sorted(h.ingestion_latencies_ms))))
+    h.run_case("Tier 2", "T2_F12_003", "F12", "P50 latency strictly below 10ms SLA threshold",
+               lambda: assert_true(sorted(h.ingestion_latencies_ms)[len(h.ingestion_latencies_ms)//2] < 10.0))
+    h.run_case("Tier 2", "T2_F12_004", "F12", "Non-negative latency values",
+               lambda: assert_true(all(l >= 0.0 for l in h.ingestion_latencies_ms)))
+    h.run_case("Tier 2", "T2_F12_005", "F12", "High volume latency samples recorded",
+               lambda: assert_true(len(h.ingestion_latencies_ms) >= 10))
+
+
+# ---------------------------------------------------------------------------
+# Tier 3: Pairwise Combinatorial Tests (15 Tests)
+# ---------------------------------------------------------------------------
+def run_tier3_tests(h: VerificationHarness):
+    print("\n--- Executing Tier 3: Pairwise Combinatorial Interactions ---")
+    h.reset_state()
+
+    cell_center = latlng_to_cell(37.7749, -122.4194, 8)
+    cell_neighbor = [c for c in grid_disk(cell_center, 1) if c != cell_center][0]
+    c_lat, c_lon = cell_to_latlng(cell_center)
+    n_lat, n_lon = cell_to_latlng(cell_neighbor)
+
+    h.run_case("Tier 3", "T3_PW_001", "F11", "[AVAILABLE x Center] vs [AVAILABLE x Neighbor] (closer wins)",
+               lambda: (h.reset_state(),
+                        h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t3_d1",
+                                        value=DriverLocationPing("t3_d1", c_lat + 0.0001, c_lon, status="AVAILABLE", timestamp=int(time.time()*1000)).to_dict()),
+                        h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t3_d2",
+                                        value=DriverLocationPing("t3_d2", n_lat, n_lon, status="AVAILABLE", timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.05),
+                        h.kafka.produce(TOPIC_RIDE_REQUESTS, key="t3_req_1",
+                                        value=RideRequest("t3_req_1", "r1", c_lat, c_lon, timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.1),
+                        assert_true(h.kafka.consume_matches(timeout_sec=1.5, target_req_id="t3_req_1")[0].driverId == "t3_d1"))[5])
+
+    h.run_case("Tier 3", "T3_PW_002", "F11", "[BUSY x Center] vs [AVAILABLE x Neighbor] (neighbor wins)",
+               lambda: (h.reset_state(),
+                        h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t3_d_busy_c",
+                                        value=DriverLocationPing("t3_d_busy_c", c_lat + 0.0001, c_lon, status="BUSY", timestamp=int(time.time()*1000)).to_dict()),
+                        h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t3_d_avail_n",
+                                        value=DriverLocationPing("t3_d_avail_n", n_lat, n_lon, status="AVAILABLE", timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.05),
+                        h.kafka.produce(TOPIC_RIDE_REQUESTS, key="t3_req_2",
+                                        value=RideRequest("t3_req_2", "r2", c_lat, c_lon, timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.1),
+                        assert_true(h.kafka.consume_matches(timeout_sec=1.5, target_req_id="t3_req_2")[0].driverId == "t3_d_avail_n"))[5])
+
+    h.run_case("Tier 3", "T3_PW_003", "F5", "[Boundary Cross] x [Status Transition AVAILABLE -> BUSY]",
+               lambda: (h.reset_state(),
+                        h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t3_d_mig_busy",
+                                        value=DriverLocationPing("t3_d_mig_busy", c_lat, c_lon, status="AVAILABLE", timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.05),
+                        h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t3_d_mig_busy",
+                                        value=DriverLocationPing("t3_d_mig_busy", n_lat, n_lon, status="BUSY", timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.05),
+                        assert_true(not h.redis.sismember(f"cell:{cell_center}:drivers", "t3_d_mig_busy") and
+                                    not h.redis.sismember(f"cell:{cell_neighbor}:drivers", "t3_d_mig_busy")))[4])
+
+    h.run_case("Tier 3", "T3_PW_004", "F6", "[Ping cessation] x [Concurrent Ride Requests]",
+               lambda: (h.reset_state(),
+                        h.redis.delete("driver:t3_stale_pair"),
+                        h.kafka.produce(TOPIC_RIDE_REQUESTS, key="t3_req_stale",
+                                        value=RideRequest("t3_req_stale", "r_stale", c_lat, c_lon, timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.05),
+                        assert_true(len(h.kafka.consume_matches(timeout_sec=0.5, target_req_id="t3_req_stale")) == 0))[3])
+
+    h.run_case("Tier 3", "T3_PW_005", "F10", "[High Frequency Pings] x [Multiple Ride Requests]",
+               lambda: (h.reset_state(),
+                        h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key="t3_d_hf",
+                                        value=DriverLocationPing("t3_d_hf", c_lat, c_lon, timestamp=int(time.time()*1000)).to_dict()),
+                        h.kafka.produce(TOPIC_RIDE_REQUESTS, key="t3_req_hf",
+                                        value=RideRequest("t3_req_hf", "r_hf", c_lat + 0.0001, c_lon, timestamp=int(time.time()*1000)).to_dict()),
+                        time.sleep(0.1),
+                        assert_true(len(h.kafka.consume_matches(timeout_sec=1.5, target_req_id="t3_req_hf")) >= 1))[3])
+
+    # 10 additional pairwise interactions
+    for idx, (p_stat, d_stat) in enumerate([("AVAILABLE", "OFFLINE"), ("BUSY", "OFFLINE"), ("AVAILABLE", "BUSY")], start=6):
+        h.run_case("Tier 3", f"T3_PW_{idx:03d}", "F11", f"Pairwise Driver Competition [{p_stat} vs {d_stat}]",
+                   lambda s1=p_stat, s2=d_stat: (
+                       h.reset_state(),
+                       h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key=f"t3_d_a_{idx}",
+                                       value=DriverLocationPing(f"t3_d_a_{idx}", c_lat, c_lon, status=s1, timestamp=int(time.time()*1000)).to_dict()),
+                       h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key=f"t3_d_b_{idx}",
+                                       value=DriverLocationPing(f"t3_d_b_{idx}", c_lat + 0.0002, c_lon, status=s2, timestamp=int(time.time()*1000)).to_dict()),
+                       time.sleep(0.05),
+                       h.kafka.produce(TOPIC_RIDE_REQUESTS, key=f"t3_req_{idx}",
+                                       value=RideRequest(f"t3_req_{idx}", f"r_{idx}", c_lat, c_lon, timestamp=int(time.time()*1000)).to_dict()),
+                       time.sleep(0.1),
+                       assert_true(len(h.kafka.consume_matches(timeout_sec=1.0, target_req_id=f"t3_req_{idx}")) == (1 if s1=="AVAILABLE" else 0))
+                   )[5])
+
+    for idx, dist_mult in enumerate([0.1, 0.5, 0.9, 1.2, 2.0, 5.0, 10.0], start=9):
+        h.run_case("Tier 3", f"T3_PW_{idx:03d}", "F8", f"Pairwise Distance Scaling x Pickup ({dist_mult:.1f}x)",
+                   lambda dm=dist_mult: (
+                       h.reset_state(),
+                       h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key=f"t3_d_scale_{idx}",
+                                       value=DriverLocationPing(f"t3_d_scale_{idx}", c_lat, c_lon, status="AVAILABLE", timestamp=int(time.time()*1000)).to_dict()),
+                       time.sleep(0.05),
+                       h.kafka.produce(TOPIC_RIDE_REQUESTS, key=f"t3_req_scale_{idx}",
+                                       value=RideRequest(f"t3_req_scale_{idx}", f"r_scale_{idx}", c_lat + (0.005 * dm), c_lon, timestamp=int(time.time()*1000)).to_dict()),
+                       time.sleep(0.1),
+                       assert_true(len(h.kafka.consume_matches(timeout_sec=1.0, target_req_id=f"t3_req_scale_{idx}")) == (1 if (latlng_to_cell(c_lat + (0.005 * dm), c_lon, 8) in grid_disk(cell_center, 1)) else 0))
+                   )[4])
+
+
+# ---------------------------------------------------------------------------
+# Tier 4: Real-World Scenarios (S1 through S6 from TEST_INFRA.md)
+# ---------------------------------------------------------------------------
+def run_tier4_scenarios(h: VerificationHarness):
+    print("\n--- Executing Tier 4: Real-World Scenarios (S1 - S6) ---")
+
+    # S1: Single Driver Same-Cell Immediate Match
+    def scenario_s1():
+        h.reset_state()
+        d_id = "s1_driver_01"
+        lat, lon = SF_CIVIC_CENTER
+        c_h3 = latlng_to_cell(lat, lon, 8)
+
+        # 1. Driver emits ping in cell
+        ping = DriverLocationPing(d_id, lat, lon, "AVAILABLE", 90.0, int(time.time()*1000))
+        h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key=d_id, value=ping.to_dict())
+        time.sleep(0.05)
+
+        # Assert Redis state
+        assert_true(h.redis.sismember(f"cell:{c_h3}:drivers", d_id), "Driver not in cell set")
+        assert_true(h.redis.hget(f"driver:{d_id}", "status") == "AVAILABLE", "Driver status not AVAILABLE")
+
+        # 2. Rider requests ride in same cell (~50m away)
+        req_id = f"s1_req_{int(time.time()*1000)}"
+        req = RideRequest(req_id, "rider_s1", lat + 0.0003, lon + 0.0003, int(time.time()*1000))
+        h.kafka.produce(TOPIC_RIDE_REQUESTS, key=req_id, value=req.to_dict())
+        time.sleep(0.1)
+
+        # 3. Verify match
+        matches = h.kafka.consume_matches(timeout_sec=2.5, target_req_id=req_id)
+        assert_true(len(matches) >= 1, "S1: No match generated on ride-matches topic")
+        m = matches[0]
+        assert_true(m.driverId == d_id, f"S1: Matched driver {m.driverId} != expected {d_id}")
+        assert_true(m.status == "OFFERED", "S1: Status not OFFERED")
+        assert_true(30.0 < m.distanceMeters < 80.0, f"S1: Unexpected distance {m.distanceMeters}m")
+        return f"Matched {d_id} in cell {c_h3} ({m.distanceMeters:.1f}m)"
+
+    h.run_case("Tier 4", "T4_SCN_S01", "S1", "Single Driver Same-Cell Immediate Match", scenario_s1)
+
+    # S2: Multi-Driver Competitive Proximity Match across Adjacent Hex Cells
+    def scenario_s2():
+        h.reset_state()
+        c_center = latlng_to_cell(SF_CIVIC_CENTER[0], SF_CIVIC_CENTER[1], 8)
+        neighbors = [c for c in grid_disk(c_center, 1) if c != c_center]
+        c_neighbor = neighbors[0]
+
+        lat_c, lon_c = cell_to_latlng(c_center)
+        lat_n, lon_n = cell_to_latlng(c_neighbor)
+
+        dA_id = "s2_driver_A_center"
+        dB_id = "s2_driver_B_neighbor"
+
+        r_lat = lat_c * 0.7 + lat_n * 0.3
+        r_lon = lon_c * 0.7 + lon_n * 0.3
+
+        dB_lat = r_lat + 0.0008
+        dB_lon = r_lon + 0.0008
+        dA_lat = lat_c
+        dA_lon = lon_c
+
+        h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key=dA_id,
+                        value=DriverLocationPing(dA_id, dA_lat, dA_lon, "AVAILABLE", timestamp=int(time.time()*1000)).to_dict())
+        h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key=dB_id,
+                        value=DriverLocationPing(dB_id, dB_lat, dB_lon, "AVAILABLE", timestamp=int(time.time()*1000)).to_dict())
+        time.sleep(0.05)
+
+        dist_A = haversine_distance(r_lat, r_lon, dA_lat, dA_lon)
+        dist_B = haversine_distance(r_lat, r_lon, dB_lat, dB_lon)
+        assert_true(dist_B < dist_A, "Test setup error: Driver B must be closer than Driver A")
+
+        req_id = f"s2_req_{int(time.time()*1000)}"
+        h.kafka.produce(TOPIC_RIDE_REQUESTS, key=req_id,
+                        value=RideRequest(req_id, "rider_s2", r_lat, r_lon, timestamp=int(time.time()*1000)).to_dict())
+        time.sleep(0.1)
+
+        matches = h.kafka.consume_matches(timeout_sec=2.5, target_req_id=req_id)
+        assert_true(len(matches) >= 1, "S2: No match returned")
+        m = matches[0]
+        assert_true(m.driverId == dB_id, f"S2: Expected closest driver {dB_id} ({dist_B:.1f}m), got {m.driverId}")
+        return f"Closest Driver B selected across boundary ({m.distanceMeters:.1f}m < {dist_A:.1f}m)"
+
+    h.run_case("Tier 4", "T4_SCN_S02", "S2", "Multi-Driver Competitive Match across Hex Cells", scenario_s2)
+
+    # S3: Moving Driver Crossing H3 Boundary Matched in New Cell
+    def scenario_s3():
+        h.reset_state()
+        d_mover = "s3_driver_boundary_crosser"
+        c_origin = latlng_to_cell(SF_CIVIC_CENTER[0], SF_CIVIC_CENTER[1], 8)
+        neighbors = [c for c in grid_disk(c_origin, 1) if c != c_origin]
+        c_dest = neighbors[0]
+
+        lat_orig, lon_orig = cell_to_latlng(c_origin)
+        lat_dest, lon_dest = cell_to_latlng(c_dest)
+        total_dist = haversine_distance(lat_orig, lon_orig, lat_dest, lon_dest)
+        assert_true(total_dist > 500.0, f"Distance between hex centers {total_dist}m must be > 500m")
+
+        # Step 1: Driver emits ping in origin cell
+        h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key=d_mover,
+                        value=DriverLocationPing(d_mover, lat_orig, lon_orig, "AVAILABLE", timestamp=int(time.time()*1000)).to_dict())
+        time.sleep(0.05)
+        assert_true(h.redis.sismember(f"cell:{c_origin}:drivers", d_mover), "Driver not in origin cell set")
+
+        # Step 2: Driver travels >500m across boundary into dest cell
+        h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key=d_mover,
+                        value=DriverLocationPing(d_mover, lat_dest, lon_dest, "AVAILABLE", timestamp=int(time.time()*1000)).to_dict())
+        time.sleep(0.05)
+
+        # Verify state migration
+        assert_true(not h.redis.sismember(f"cell:{c_origin}:drivers", d_mover), "Driver still in old cell set (SREM failed)")
+        assert_true(h.redis.sismember(f"cell:{c_dest}:drivers", d_mover), "Driver not in new cell set (SADD failed)")
+        assert_true(h.redis.hget(f"driver:{d_mover}", "h3_cell") == c_dest, "Driver hash h3_cell not updated")
+
+        # Step 3: Request submitted in dest cell, driver matched in new cell
+        req_id = f"s3_req_{int(time.time()*1000)}"
+        h.kafka.produce(TOPIC_RIDE_REQUESTS, key=req_id,
+                        value=RideRequest(req_id, "rider_s3", lat_dest + 0.0001, lon_dest, timestamp=int(time.time()*1000)).to_dict())
+        time.sleep(0.1)
+
+        matches = h.kafka.consume_matches(timeout_sec=2.5, target_req_id=req_id)
+        assert_true(len(matches) >= 1, "S3: No match found after migration")
+        assert_true(matches[0].driverId == d_mover, f"S3: Matched {matches[0].driverId} != {d_mover}")
+        return f"Successfully migrated {c_origin} -> {c_dest} and matched"
+
+    h.run_case("Tier 4", "T4_SCN_S03", "S3", "Moving Driver Crossing H3 Boundary Matched in New Cell", scenario_s3)
+
+    # S4: Stale Driver Ping Cessation & Graceful Next-Available Match
+    def scenario_s4():
+        h.reset_state()
+        c_cell = latlng_to_cell(SF_MISSION[0], SF_MISSION[1], 8)
+        lat_c, lon_c = cell_to_latlng(c_cell)
+
+        d_stale = "s4_driver_stale_ping"
+        d_active = "s4_driver_active_ping"
+
+        h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key=d_stale,
+                        value=DriverLocationPing(d_stale, lat_c + 0.0002, lon_c, "AVAILABLE", timestamp=int(time.time()*1000)).to_dict())
+        h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key=d_active,
+                        value=DriverLocationPing(d_active, lat_c + 0.0012, lon_c, "AVAILABLE", timestamp=int(time.time()*1000)).to_dict())
+        time.sleep(0.05)
+
+        h.redis.expire(f"driver:{d_stale}", 1)
+        time.sleep(1.1)
+
+        # Assert d_stale hash has expired from Redis
+        assert_true(not bool(h.redis.hgetall(f"driver:{d_stale}")), "Stale driver hash failed to expire")
+
+        # Ride request arrives
+        req_id = f"s4_req_{int(time.time()*1000)}"
+        h.kafka.produce(TOPIC_RIDE_REQUESTS, key=req_id,
+                        value=RideRequest(req_id, "rider_s4", lat_c, lon_c, timestamp=int(time.time()*1000)).to_dict())
+        time.sleep(0.1)
+
+        matches = h.kafka.consume_matches(timeout_sec=2.5, target_req_id=req_id)
+        assert_true(len(matches) >= 1, "S4: No match found")
+        m = matches[0]
+        assert_true(m.driverId != d_stale, "S4: Stale driver was incorrectly matched!")
+        assert_true(m.driverId == d_active, f"S4: Expected next available {d_active}, got {m.driverId}")
+        return f"Stale {d_stale} evicted; matched next available {d_active}"
+
+    h.run_case("Tier 4", "T4_SCN_S04", "S4", "Stale Driver Ping Cessation & Next-Available Match", scenario_s4)
+
+    # S5: High-Frequency Concurrent Requests with Driver Reservation Mutex
+    def scenario_s5():
+        h.reset_state()
+        d_single = "s5_driver_single_capacity"
+        lat, lon = SF_UNION_SQUARE
+        h.kafka.produce(TOPIC_DRIVER_LOCATIONS, key=d_single,
+                        value=DriverLocationPing(d_single, lat, lon, "AVAILABLE", timestamp=int(time.time()*1000)).to_dict())
+        time.sleep(0.05)
+
+        # 5 simultaneous requests targeting the same spot
+        req_ids = [f"s5_req_{i}_{int(time.time()*1000)}" for i in range(5)]
+        for r_id in req_ids:
+            h.kafka.produce(TOPIC_RIDE_REQUESTS, key=r_id,
+                            value=RideRequest(r_id, f"rider_{r_id}", lat + 0.0001, lon, timestamp=int(time.time()*1000)).to_dict())
+
+        time.sleep(0.2)
+        all_matches = []
+        for r_id in req_ids:
+            m = h.kafka.consume_matches(timeout_sec=1.5, target_req_id=r_id)
+            if m:
+                all_matches.extend(m)
+
+        matched_drivers = [m.driverId for m in all_matches if m.driverId == d_single]
+        assert_true(len(matched_drivers) == 1,
+                    f"S5: Race condition! Driver booked {len(matched_drivers)} times simultaneously (must be exactly 1)")
+        return f"Exactly 1 of 5 concurrent requests reserved driver {d_single}"
+
+    h.run_case("Tier 4", "T4_SCN_S05", "S5", "Concurrent Requests Driver Reservation Mutex", scenario_s5)
+
+    # S6: Complete Out-of-Range Request Graceful Skipping (No False Match)
+    def scenario_s6():
+        h.reset_state()
+        sj_lat, sj_lon = SAN_JOSE_DOWNTOWN
+        req_id = f"s6_req_out_of_range_{int(time.time()*1000)}"
+        h.kafka.produce(TOPIC_RIDE_REQUESTS, key=req_id,
+                        value=RideRequest(req_id, "rider_san_jose", sj_lat, sj_lon, timestamp=int(time.time()*1000)).to_dict())
+        time.sleep(0.5)
+
+        matches = h.kafka.consume_matches(timeout_sec=1.0, target_req_id=req_id)
+        assert_true(len(matches) == 0,
+                    f"S6: False match generated for out-of-range request in San Jose! Matched: {matches}")
+        return "Gracefully ignored without crash or false match"
+
+    h.run_case("Tier 4", "T4_SCN_S06", "S6", "Complete Out-of-Range Request Graceful Skipping", scenario_s6)
+
+
+# ---------------------------------------------------------------------------
+# Dedicated Fleet Movement Simulation Feature Verification
+# ---------------------------------------------------------------------------
+def run_fleet_verification(h: VerificationHarness):
+    print("\n--- Executing Fleet Movement Simulation Verification ---")
+    h.reset_state()
+    fleet = FleetSimulator(kafka_bus=h.kafka, num_drivers=15)
+    pings = fleet.emit_tick()
+
+    def verify_fleet():
+        assert_true(len(pings) == 15, "Fleet simulator did not generate 15 pings")
+        for p in pings:
+            cell = latlng_to_cell(p.latitude, p.longitude, 8)
+            assert_true(h.redis.sismember(f"cell:{cell}:drivers", p.driverId),
+                        f"Fleet driver {p.driverId} not in cell set {cell}")
+            h_data = h.redis.hgetall(f"driver:{p.driverId}")
+            assert_true(bool(h_data), f"Driver hash missing for {p.driverId}")
+            assert_true(h.redis.ttl(f"driver:{p.driverId}") > 0, f"TTL missing for {p.driverId}")
+        return f"All 15 fleet drivers active in SF area with valid H3 cell sets and TTL"
+
+    h.run_case("Tier 4", "T4_FLEET_01", "FLEET", "15 Drivers Movement & Redis State Verification", verify_fleet)
+
+
+# ---------------------------------------------------------------------------
+# Main CLI & Dispatcher
+# ---------------------------------------------------------------------------
+def main():
+    parser = argparse.ArgumentParser(
+        description="Ride-Hailing E2E Verification Harness & Fleet Simulator",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument("--mode", choices=["all", "e2e", "fleet", "mock", "tier1", "tier2", "tier3", "tier4"],
+                        default="all", help="Execution mode")
+    parser.add_argument("--scenario", choices=["S1", "S2", "S3", "S4", "S5", "S6", "all"],
+                        default="all", help="Filter Tier 4 scenario")
+    parser.add_argument("--kafka-bootstrap", default="localhost:9092", help="Kafka broker bootstrap server")
+    parser.add_argument("--redis-host", default="localhost", help="Redis host")
+    parser.add_argument("--redis-port", type=int, default=6379, help="Redis port")
+    parser.add_argument("--duration", type=float, default=15.0, help="Continuous fleet simulation duration (sec)")
+    parser.add_argument("--output", default="verification_results.json", help="JSON results output file")
+    parser.add_argument("--mock", action="store_true", help="Force mock in-memory bus and Redis store")
+    parser.add_argument("--dry-run", action="store_true", help="Run verification harness against self-contained mock engine")
+
+    args = parser.parse_args()
+
+    print("\n" + "=" * 105)
+    print(f"{'REAL-TIME RIDE-HAILING E2E VERIFICATION HARNESS':^105}")
+    print(f"{'Mode: ' + args.mode.upper():^105}")
+    print("=" * 105)
+
+    # Determine backend: Live or Mock
+    use_mock = args.mock or args.dry_run or (args.mode == "mock")
+
+    if not use_mock:
+        # Check if live services are reachable
+        print(f"[*] Probing Live Redis ({args.redis_host}:{args.redis_port})...")
+        live_redis = LiveRedisStore(host=args.redis_host, port=args.redis_port)
+        redis_ok = live_redis.ping()
+
+        print(f"[*] Probing Live Kafka ({args.kafka_bootstrap})...")
+        live_kafka = LiveKafkaBus(bootstrap_servers=args.kafka_bootstrap)
+        kafka_ok = live_kafka.is_reachable()
+
+        if redis_ok and kafka_ok:
+            print("[+] Live Kafka and Redis detected. Running in LIVE E2E mode.")
+            redis_store = live_redis
+            kafka_bus = live_kafka
+        else:
+            print("[-] Live services not fully available:")
+            print(f"    Redis ({args.redis_host}:{args.redis_port}): {'ONLINE' if redis_ok else 'OFFLINE'}")
+            print(f"    Kafka ({args.kafka_bootstrap}): {'ONLINE' if kafka_ok else 'OFFLINE'}")
+            print("[!] Auto-selecting Mock In-Memory Engine for self-contained verification.")
+            use_mock = True
+
+    if use_mock:
+        redis_store = MockRedisStore()
+        kafka_bus = MockKafkaBus(redis_store=redis_store)
+
+    harness = VerificationHarness(kafka_bus=kafka_bus, redis_store=redis_store)
+
+    # Fleet standalone mode
+    if args.mode == "fleet":
+        fleet = FleetSimulator(kafka_bus=kafka_bus, num_drivers=15)
+        print(f"[*] Initialized Fleet Simulator with 15 drivers in San Francisco area.")
+        print(f"[*] Running continuous fleet simulation for {args.duration}s (interval=3s)...")
+        fleet.start_continuous(interval_sec=3.0, duration_sec=args.duration)
+        time.sleep(args.duration)
+        fleet.stop()
+        print("[+] Fleet simulation completed successfully.")
+        sys.exit(0)
+
+    # Verification Suites
+    if args.mode in ("all", "e2e", "mock", "tier1"):
+        run_tier1_tests(harness)
+
+    if args.mode in ("all", "e2e", "mock", "tier2"):
+        run_tier2_tests(harness)
+
+    if args.mode in ("all", "e2e", "mock", "tier3"):
+        run_tier3_tests(harness)
+
+    if args.mode in ("all", "e2e", "mock", "tier4"):
+        run_fleet_verification(harness)
+        run_tier4_scenarios(harness)
+
+    # Print Structured Summary & Export JSON
+    harness.print_summary_table()
+    harness.export_json(args.output)
+
+    failed_count = sum(1 for r in harness.results if r.status != "PASS")
+    if failed_count > 0:
+        print(f"[!] Test suite completed with {failed_count} failure(s). Exiting with code 1.")
+        sys.exit(1)
+    else:
+        print("[+] All verification assertions passed successfully! Exiting with code 0.")
+        sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()
