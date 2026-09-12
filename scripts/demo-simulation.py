@@ -68,3 +68,53 @@ def main():
 
     # 1. Emit Driver Location Pings
     print_header("STEP 1: EMITTING DRIVER LOCATION PINGS")
+    print(f"Publishing {len(DRIVERS)} driver GPS telemetry pings to topic '{TOPIC_LOCATIONS}'...\n")
+
+    for d in DRIVERS:
+        # Compute expected Uber H3 cell at resolution 8
+        cell = h3.latlng_to_cell(d["lat"], d["lon"], 8)
+        payload = {
+            "driverId": d["id"],
+            "latitude": d["lat"],
+            "longitude": d["lon"],
+            "status": d["status"],
+            "bearing": d["bearing"],
+            "timestamp": int(time.time() * 1000)
+        }
+        producer.send(TOPIC_LOCATIONS, value=payload)
+        print(f"  🚗 [{d['id']}] {d['name']:25} -> ({d['lat']:.4f}, {d['lon']:.4f}) | H3 Hex: {cell}")
+
+    producer.flush()
+    print("\nWaiting 2 seconds for Apache Flink to process stream and populate Redis...")
+    time.sleep(2)
+
+    # 2. Inspect Redis Spatial State
+    print_header("STEP 2: INSPECTING IN-MEMORY REDIS SPATIAL STATE")
+    rider_cell = h3.latlng_to_cell(RIDER["pickupLat"], RIDER["pickupLon"], 8)
+    neighbors = list(h3.grid_disk(rider_cell, 1))
+    print(f"Rider Pickup H3 Cell (Res 8): {rider_cell}")
+    print(f"Proximity Search Ring (k=1):   {len(neighbors)} hexagonal cells (~460m edge length each)\n")
+
+    found_drivers_count = 0
+    for cell in neighbors:
+        cell_key = f"cell:{cell}:drivers"
+        driver_ids = r.smembers(cell_key)
+        is_origin = " (Rider Cell)" if cell == rider_cell else ""
+        if driver_ids:
+            print(f"  📍 Hex {cell}{is_origin}: {len(driver_ids)} driver(s) -> {list(driver_ids)}")
+            for did in driver_ids:
+                h = r.hgetall(f"driver:{did}")
+                ttl = r.ttl(f"driver:{did}")
+                print(f"     └─ {did}: status={h.get('status')}, last_lat={h.get('latitude')}, TTL={ttl}s")
+                found_drivers_count += 1
+        else:
+            print(f"  ▫️ Hex {cell}{is_origin}: empty")
+
+    # 3. Submit Ride Request
+    print_header("STEP 3: SUBMITTING RIDER REQUEST")
+    print(f"Rider '{RIDER['riderId']}' requesting ride at Market & Powell St:")
+    print(f"  Pickup Location: ({RIDER['pickupLat']}, {RIDER['pickupLon']})")
+    print(f"  Sending to Kafka topic: '{TOPIC_REQUESTS}'...")
+
+    consumer = KafkaConsumer(
+        TOPIC_MATCHES,
