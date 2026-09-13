@@ -118,3 +118,47 @@ def main():
 
     consumer = KafkaConsumer(
         TOPIC_MATCHES,
+        bootstrap_servers=BOOTSTRAP_SERVERS,
+        value_deserializer=lambda m: json.loads(m.decode("utf-8")),
+        auto_offset_reset="latest",
+        enable_auto_commit=True,
+        consumer_timeout_ms=5000
+    )
+
+    t0 = time.time()
+    producer.send(TOPIC_REQUESTS, value=RIDER)
+    producer.flush()
+
+    # 4. Await Proximity Match
+    print_header("STEP 4: AWAITING DISPATCH PROXIMITY MATCH FROM KAFKA")
+    print(f"Listening on '{TOPIC_MATCHES}' (timeout: 5 seconds)...")
+
+    matched = False
+    for msg in consumer:
+        match = msg.value
+        if match.get("requestId") == RIDER["requestId"]:
+            elapsed_ms = (time.time() - t0) * 1000
+            matched = True
+            print("\n  🎯 MATCH FOUND!")
+            print(f"  -------------------------------------------------------------")
+            print(f"  Request ID:       {match.get('requestId')}")
+            print(f"  Rider ID:         {match.get('riderId')}")
+            print(f"  Matched Driver:   {match.get('driverId')}")
+            print(f"  Driver Location:  ({match.get('driverLat')}, {match.get('driverLon')})")
+            print(f"  Pickup Location:  ({match.get('pickupLat')}, {match.get('pickupLon')})")
+            print(f"  Distance:         {match.get('distanceMeters'):.1f} meters")
+            print(f"  Match Status:     {match.get('status')}")
+            print(f"  Dispatch Latency: {elapsed_ms:.1f} ms")
+            print(f"  -------------------------------------------------------------")
+            break
+
+    if not matched:
+        print("\n  ⚠️ No match received within 5s.")
+        print("  Make sure the Dispatch Matcher is running (`./scripts/run-matcher.sh`).")
+
+    consumer.close()
+    producer.close()
+    print_header("DEMO COMPLETE")
+
+if __name__ == "__main__":
+    main()
