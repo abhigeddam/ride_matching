@@ -58,3 +58,58 @@ The runner wrapper automatically:
 
 | Feature | Description | Tier 1 (Isolation) | Tier 2 (BVA) | Tier 3 (Pairwise) | Tier 4 (Scenario) | Status |
 |---|---|:---:|:---:|:---:|:---:|:---:|
+| **F1** | Kafka KRaft & Redis Docker Startup | 5 tests | 5 tests | ✓ | S1 | **READY** |
+| **F2** | Automated Topic Initialization (`driver-locations`, `ride-requests`, `ride-matches`) | 5 tests | 5 tests | ✓ | S1 | **READY** |
+| **F3** | Driver Location Ingestion to Redis (`driver:<id>` hash: lat, lon, status, h3_cell, last_ping) | 5 tests | 5 tests | ✓ | S1, S2, S3 | **READY** |
+| **F4** | Uber H3 Resolution 8 Cell Set Indexing (`cell:<cell>:drivers`) | 5 tests | 5 tests | ✓ | S1, S2, S3 | **READY** |
+| **F5** | Dynamic Cell Migration Handling (`SREM old_cell`, `SADD new_cell`) | 5 tests | 5 tests | ✓ | S3 | **READY** |
+| **F6** | Driver TTL Eviction (15s Window with renewal on ping) | 5 tests | 5 tests | ✓ | S4 | **READY** |
+| **F7** | Ride Request Ingestion & Parsing (`requestId`, `riderId`, GPS, timestamp) | 5 tests | 5 tests | ✓ | S1–S6 | **READY** |
+| **F8** | 7-Cell Neighborhood Expansion (`gridDisk(cell, 1)` center + 6 neighbors) | 5 tests | 5 tests | ✓ | S1, S2, S3 | **READY** |
+| **F9** | Spherical Haversine Proximity Ranking ($R = 6,371,000$m) | 5 tests | 5 tests | ✓ | S1, S2, S5 | **READY** |
+| **F10** | Closest Driver Dispatch Match Output (`RideMatch` to `ride-matches`) | 5 tests | 5 tests | ✓ | S1, S2, S3, S5 | **READY** |
+| **F11** | Stale / Busy / Offline Driver Exclusion | 5 tests | 5 tests | ✓ | S4 | **READY** |
+| **F12** | Ingestion Latency SLA Verification (<10ms SLA) | 5 tests | 5 tests | ✓ | Fleet | **READY** |
+
+**Total Verified Test Cases**: **142**
+- Tier 1: 60 tests (12 features × 5 tests)
+- Tier 2: 60 tests (12 features × 5 tests)
+- Tier 3: 15 pairwise interaction tests
+- Tier 4: 7 end-to-end scenarios (6 scenarios S1–S6 + 1 fleet movement simulation)
+
+---
+
+## Real-World Workload Scenarios (Tier 4)
+
+1. **FLEET — 15 Drivers SF Fleet Simulation**:
+   - 15 drivers initialized across Downtown San Francisco (Civic Center, SoMa, Financial District, Mission, etc.).
+   - Pings emitted every 3 seconds with realistic speeds (20–45 km/h) and heading bearings.
+   - Asserts all 15 drivers are indexed in `cell:<cell>:drivers` sets and `driver:<id>` hashes with 15s TTL.
+2. **S1 — Single Driver Same-Cell Immediate Match**:
+   - Driver in SF Civic Center; rider requests ride 50m away in same H3 Res 8 cell.
+   - Validates immediate match generation, status transition to `OFFERED`, and accurate distance calculation.
+3. **S2 — Multi-Driver Competitive Match across Hex Cells**:
+   - Compares Driver A (in center cell, 350m away) with Driver B (in adjacent neighbor cell, 120m away).
+   - Validates that Driver B in the adjacent hex is matched because Haversine distance is strictly smaller, confirming 7-cell expansion across cell borders.
+4. **S3 — Moving Driver Boundary Crossing Migration**:
+   - Driver moves >500m across an H3 Res 8 cell boundary.
+   - Asserts driver removed from origin cell (`SREM`), added to destination cell (`SADD`), and driver hash `h3_cell` updated.
+   - Validates ride request in destination cell matches the migrated driver.
+5. **S4 — Stale Driver Ping Cessation & Next-Available Match**:
+   - Driver A (near, 30m) ceases pings; Driver B (farther, 150m) continues active pings.
+   - Asserts 15s TTL expiration of Driver A; ride request matches Driver B and excludes expired Driver A.
+6. **S5 — High-Frequency Concurrent Requests with Reservation Mutex**:
+   - 5 simultaneous ride requests target a single available driver.
+   - Validates that atomic reservation prevents double-booking: exactly 1 request is matched.
+7. **S6 — Out-of-Range Request Graceful Skipping**:
+   - Ride request submitted in San Jose (>60km from SF fleet).
+   - Validates zero false matches produced and no service crash.
+
+---
+
+## Machine-Readable Results Schema (`verification_results.json`)
+```json
+{
+  "timestamp": "2026-09-15T16:50:11.671301+00:00",
+  "suite": "Real-Time Ride-Hailing Driver-Location Ingestion & Proximity Dispatch E2E",
+  "summary": {
