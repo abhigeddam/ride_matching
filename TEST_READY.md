@@ -113,3 +113,48 @@ The runner wrapper automatically:
   "timestamp": "2026-09-15T16:50:11.671301+00:00",
   "suite": "Real-Time Ride-Hailing Driver-Location Ingestion & Proximity Dispatch E2E",
   "summary": {
+    "total": 142,
+    "passed": 142,
+    "failed": 0,
+    "status": "PASS"
+  },
+  "metrics": {
+    "ingestion_latency_ms": {
+      "count": 10,
+      "p50": 0.02,
+      "p95": 0.08,
+      "p99": 0.08,
+      "sla_passed": true
+    }
+  },
+  "scenarios": {
+    "FLEET": "PASS",
+    "S1": "PASS",
+    "S2": "PASS",
+    "S3": "PASS",
+    "S4": "PASS",
+    "S5": "PASS",
+    "S6": "PASS"
+  },
+  "tests": [
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F01_001",
+      "feature": "F1",
+      "name": "Redis PING responsiveness",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "PONG received",
+      "error_message": null
+    }
+  ]
+}
+```
+
+---
+
+## Artifact Index
+- `/Users/abhiramtarungeddam/ride-hailing-system/simulation/simulate_and_verify.py` — Test harness & fleet simulation engine.
+- `/Users/abhiramtarungeddam/ride-hailing-system/simulation/verify.sh` — Executable CI/CD test runner.
+- `/Users/abhiramtarungeddam/ride-hailing-system/verification_results.json` — Test execution output and SLA metrics.
+- `/Users/abhiramtarungeddam/ride-hailing-system/TEST_READY.md` — Test suite specification document.
