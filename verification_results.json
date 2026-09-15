@@ -1,0 +1,1450 @@
+{
+  "timestamp": "2026-09-15T17:44:11.561763+00:00",
+  "suite": "Real-Time Ride-Hailing Driver-Location Ingestion & Proximity Dispatch E2E",
+  "summary": {
+    "total": 142,
+    "passed": 142,
+    "failed": 0,
+    "status": "PASS"
+  },
+  "metrics": {
+    "ingestion_latency_ms": {
+      "count": 10,
+      "p50": 0.03,
+      "p95": 0.11,
+      "p99": 0.11,
+      "sla_passed": true
+    }
+  },
+  "scenarios": {
+    "FLEET": "PASS",
+    "S1": "PASS",
+    "S2": "PASS",
+    "S3": "PASS",
+    "S4": "PASS",
+    "S5": "PASS",
+    "S6": "PASS"
+  },
+  "tests": [
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F01_001",
+      "feature": "F1",
+      "name": "Redis PING responsiveness",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "PONG received",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F01_002",
+      "feature": "F1",
+      "name": "Redis Server Info validity",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "v=7.2.4-mock",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F01_003",
+      "feature": "F1",
+      "name": "Kafka Broker reachability",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "Broker reachable",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F01_004",
+      "feature": "F1",
+      "name": "Redis Hash Read/Write Roundtrip",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "Verified",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F01_005",
+      "feature": "F1",
+      "name": "Redis Set Add/Members Roundtrip",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "Verified",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F02_001",
+      "feature": "F2",
+      "name": "Verify topic 'driver-locations' exists",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F02_002",
+      "feature": "F2",
+      "name": "Verify topic 'ride-requests' exists",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F02_003",
+      "feature": "F2",
+      "name": "Verify topic 'ride-matches' exists",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F02_004",
+      "feature": "F2",
+      "name": "Kafka Topic set completeness check",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F02_005",
+      "feature": "F2",
+      "name": "Kafka Producer publish handshake",
+      "status": "PASS",
+      "duration_ms": 0.03,
+      "details": "Handshake OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F03_001",
+      "feature": "F3",
+      "name": "Driver hash created in Redis",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F03_002",
+      "feature": "F3",
+      "name": "Driver hash contains required fields",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F03_003",
+      "feature": "F3",
+      "name": "Driver latitude/longitude matches ping",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F03_004",
+      "feature": "F3",
+      "name": "Driver status matches ping",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F03_005",
+      "feature": "F3",
+      "name": "Driver last_ping timestamp matches",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F04_001",
+      "feature": "F4",
+      "name": "H3 cell address matches Resolution 8 spec",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F04_002",
+      "feature": "F4",
+      "name": "Driver added to cell:drivers Set",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F04_003",
+      "feature": "F4",
+      "name": "Multiple drivers indexed in same cell set",
+      "status": "PASS",
+      "duration_ms": 55.04,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F04_004",
+      "feature": "F4",
+      "name": "SMEMBERS returns accurate set size",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F04_005",
+      "feature": "F4",
+      "name": "Driver ID in cell set is clean string",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F05_001",
+      "feature": "F5",
+      "name": "Driver initially present in start cell set",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F05_002",
+      "feature": "F5",
+      "name": "Driver removed from old cell set (SREM)",
+      "status": "PASS",
+      "duration_ms": 0.03,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F05_003",
+      "feature": "F5",
+      "name": "Driver added to new cell set (SADD)",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F05_004",
+      "feature": "F5",
+      "name": "Driver hash h3_cell updated to target cell",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F05_005",
+      "feature": "F5",
+      "name": "Intra-cell movement maintains cell membership",
+      "status": "PASS",
+      "duration_ms": 55.16,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F06_001",
+      "feature": "F6",
+      "name": "Driver hash has active TTL <= 15s",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F06_002",
+      "feature": "F6",
+      "name": "Subsequent ping refreshes TTL",
+      "status": "PASS",
+      "duration_ms": 254.8,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F06_003",
+      "feature": "F6",
+      "name": "Driver TTL decrements over elapsed time",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F06_004",
+      "feature": "F6",
+      "name": "Key disappears when expired (simulated/fast)",
+      "status": "PASS",
+      "duration_ms": 1102.36,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F06_005",
+      "feature": "F6",
+      "name": "Expired driver hash TTL returns negative",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F07_001",
+      "feature": "F7",
+      "name": "RideRequest JSON schema valid",
+      "status": "PASS",
+      "duration_ms": 0.25,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F07_002",
+      "feature": "F7",
+      "name": "RideRequest published to Kafka topic",
+      "status": "PASS",
+      "duration_ms": 0.38,
+      "details": "Sent",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F07_003",
+      "feature": "F7",
+      "name": "High precision coordinate preservation",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F07_004",
+      "feature": "F7",
+      "name": "RideRequest timestamp millisecond epoch format",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F07_005",
+      "feature": "F7",
+      "name": "Malformed JSON request discarded gracefully",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "Handled",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F08_001",
+      "feature": "F8",
+      "name": "Pickup coordinate maps to single H3 Res 8 cell",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F08_002",
+      "feature": "F8",
+      "name": "Neighborhood expansion produces exactly 7 cells",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F08_003",
+      "feature": "F8",
+      "name": "Center cell is included in expanded neighborhood",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F08_004",
+      "feature": "F8",
+      "name": "Neighbors are at H3 grid distance 1",
+      "status": "PASS",
+      "duration_ms": 0.05,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F08_005",
+      "feature": "F8",
+      "name": "Neighborhood expansion is deterministic",
+      "status": "PASS",
+      "duration_ms": 0.03,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F09_001",
+      "feature": "F9",
+      "name": "Distance between identical points evaluates to 0.0m",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F09_002",
+      "feature": "F9",
+      "name": "SF to Oakland Haversine distance accuracy (~13.4km)",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F09_003",
+      "feature": "F9",
+      "name": "Plan.md reference pair distance ~127m",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F09_004",
+      "feature": "F9",
+      "name": "Ranking sorts ascending by distance",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F09_005",
+      "feature": "F9",
+      "name": "Tie-breaking consistency on equidistant points",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F10_001",
+      "feature": "F10",
+      "name": "RideMatch event received for request",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F10_002",
+      "feature": "F10",
+      "name": "RideMatch record key matches requestId",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F10_003",
+      "feature": "F10",
+      "name": "Matched driver ID equals available driver",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F10_004",
+      "feature": "F10",
+      "name": "RideMatch status set to OFFERED",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F10_005",
+      "feature": "F10",
+      "name": "RideMatch distanceMeters is positive and accurate",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F11_001",
+      "feature": "F11",
+      "name": "BUSY driver is excluded from matching",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F11_002",
+      "feature": "F11",
+      "name": "Next available driver is selected",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F11_003",
+      "feature": "F11",
+      "name": "OFFLINE driver is excluded from cell set",
+      "status": "PASS",
+      "duration_ms": 55.11,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F11_004",
+      "feature": "F11",
+      "name": "Stale driver with expired hash excluded",
+      "status": "PASS",
+      "duration_ms": 0.02,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F11_005",
+      "feature": "F11",
+      "name": "Only AVAILABLE status driver reserved",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F12_001",
+      "feature": "F12",
+      "name": "Single ping ingestion latency < 10ms SLA",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F12_002",
+      "feature": "F12",
+      "name": "Average ingestion latency across batch < 10ms",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F12_003",
+      "feature": "F12",
+      "name": "P95 ingestion latency < 15ms",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F12_004",
+      "feature": "F12",
+      "name": "P99 ingestion latency < 25ms",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 1",
+      "test_id": "T1_F12_005",
+      "feature": "F12",
+      "name": "SLA latency tracking metric recorded",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F01_001",
+      "feature": "F1",
+      "name": "Redis large string key boundary (512 bytes)",
+      "status": "PASS",
+      "duration_ms": 0.02,
+      "details": "1",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F01_002",
+      "feature": "F1",
+      "name": "Redis non-existent key returns None",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F01_003",
+      "feature": "F1",
+      "name": "Redis empty set SMEMBERS returns empty set",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F01_004",
+      "feature": "F1",
+      "name": "Redis delete non-existent key returns 0",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F01_005",
+      "feature": "F1",
+      "name": "Redis flushdb clears all keys",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F02_001",
+      "feature": "F2",
+      "name": "Kafka produce with None key accepted",
+      "status": "PASS",
+      "duration_ms": 0.04,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F02_002",
+      "feature": "F2",
+      "name": "Kafka produce with empty key string accepted",
+      "status": "PASS",
+      "duration_ms": 0.03,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F02_003",
+      "feature": "F2",
+      "name": "Kafka produce payload with unicode characters",
+      "status": "PASS",
+      "duration_ms": 0.02,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F02_004",
+      "feature": "F2",
+      "name": "Kafka topic query returns non-empty topic set",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F02_005",
+      "feature": "F2",
+      "name": "Kafka consumer poll with zero matches returns empty list",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F03_001",
+      "feature": "F3",
+      "name": "North Pole coordinate boundary (lat=90.0, lon=0.0)",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F03_002",
+      "feature": "F3",
+      "name": "South Pole coordinate boundary (lat=-90.0, lon=0.0)",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F03_003",
+      "feature": "F3",
+      "name": "Date line east boundary (lon=180.0)",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F03_004",
+      "feature": "F3",
+      "name": "Date line west boundary (lon=-180.0)",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F03_005",
+      "feature": "F3",
+      "name": "Null Island coordinate boundary (lat=0.0, lon=0.0)",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F04_001",
+      "feature": "F4",
+      "name": "H3 Cell with single driver set size == 1",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F04_002",
+      "feature": "F4",
+      "name": "H3 Cell with 100 drivers set size == 100",
+      "status": "PASS",
+      "duration_ms": 0.1,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F04_003",
+      "feature": "F4",
+      "name": "Adding duplicate driver ID is idempotent",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F04_004",
+      "feature": "F4",
+      "name": "Driver ID with complex symbols (_ - : #)",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F04_005",
+      "feature": "F4",
+      "name": "SREM on non-existent member is non-blocking",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F05_001",
+      "feature": "F5",
+      "name": "Ping bearing boundary: 0.0 degrees",
+      "status": "PASS",
+      "duration_ms": 0.02,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F05_002",
+      "feature": "F5",
+      "name": "Ping bearing boundary: 359.9 degrees",
+      "status": "PASS",
+      "duration_ms": 0.02,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F05_003",
+      "feature": "F5",
+      "name": "Ping bearing boundary: 360.0 degrees",
+      "status": "PASS",
+      "duration_ms": 0.02,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F05_004",
+      "feature": "F5",
+      "name": "Ping bearing negative value normalized",
+      "status": "PASS",
+      "duration_ms": 0.02,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F05_005",
+      "feature": "F5",
+      "name": "Stationary ping in same cell preserves cell set",
+      "status": "PASS",
+      "duration_ms": 55.19,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F06_001",
+      "feature": "F6",
+      "name": "Immediate post-ping TTL is within [13, 15]s",
+      "status": "PASS",
+      "duration_ms": 55.15,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F06_002",
+      "feature": "F6",
+      "name": "TTL boundary at 14.5s remaining (still valid)",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F06_003",
+      "feature": "F6",
+      "name": "TTL boundary at 1s remaining (imminent expiry)",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F06_004",
+      "feature": "F6",
+      "name": "TTL at 0s expiry threshold",
+      "status": "PASS",
+      "duration_ms": 55.06,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F06_005",
+      "feature": "F6",
+      "name": "Rapid ping stream maintains continuous TTL renewal",
+      "status": "PASS",
+      "duration_ms": 157.32,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F07_001",
+      "feature": "F7",
+      "name": "Request timestamp = 0 epoch handled gracefully",
+      "status": "PASS",
+      "duration_ms": 0.28,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F07_002",
+      "feature": "F7",
+      "name": "Request with future timestamp (+1 day)",
+      "status": "PASS",
+      "duration_ms": 0.05,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F07_003",
+      "feature": "F7",
+      "name": "Request with 10 decimal place coordinate precision",
+      "status": "PASS",
+      "duration_ms": 0.04,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F07_004",
+      "feature": "F7",
+      "name": "Request with hyphens and special chars in requestId",
+      "status": "PASS",
+      "duration_ms": 0.04,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F07_005",
+      "feature": "F7",
+      "name": "Request with 0 drivers in 7-cell ring yields 0 matches",
+      "status": "PASS",
+      "duration_ms": 105.07,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F08_001",
+      "feature": "F8",
+      "name": "7-cell expansion at North Pole yields 7 cells",
+      "status": "PASS",
+      "duration_ms": 0.08,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F08_002",
+      "feature": "F8",
+      "name": "7-cell expansion at South Pole yields 7 cells",
+      "status": "PASS",
+      "duration_ms": 0.03,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F08_003",
+      "feature": "F8",
+      "name": "7-cell expansion across Date Line yields 7 cells",
+      "status": "PASS",
+      "duration_ms": 0.02,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F08_004",
+      "feature": "F8",
+      "name": "Radius 0 expansion yields exactly 1 cell (center only)",
+      "status": "PASS",
+      "duration_ms": 0.03,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F08_005",
+      "feature": "F8",
+      "name": "All 6 neighbors at grid distance 1",
+      "status": "PASS",
+      "duration_ms": 0.05,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F09_001",
+      "feature": "F9",
+      "name": "Zero meter exact boundary (same coordinates)",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F09_002",
+      "feature": "F9",
+      "name": "Sub-meter micro-distance (10cm delta)",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F09_003",
+      "feature": "F9",
+      "name": "Center to cell edge boundary (~461m)",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F09_004",
+      "feature": "F9",
+      "name": "Outer boundary of 7-cell cluster (~1300m)",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F09_005",
+      "feature": "F9",
+      "name": "Antipodal points distance equals pi * R (~20,015km)",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F10_001",
+      "feature": "F10",
+      "name": "Driver located at 0m from pickup matched with distance 0m",
+      "status": "PASS",
+      "duration_ms": 160.41,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F10_002",
+      "feature": "F10",
+      "name": "Driver at outer limit of neighbor cell matched",
+      "status": "PASS",
+      "duration_ms": 155.53,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F10_003",
+      "feature": "F10",
+      "name": "Match distance rounded to 1 decimal place",
+      "status": "PASS",
+      "duration_ms": 157.38,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F10_004",
+      "feature": "F10",
+      "name": "Match status equals OFFERED",
+      "status": "PASS",
+      "duration_ms": 160.39,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F10_005",
+      "feature": "F10",
+      "name": "Match timestamp is positive epoch",
+      "status": "PASS",
+      "duration_ms": 159.91,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F11_001",
+      "feature": "F11",
+      "name": "Driver marked OFFERED excluded from next match",
+      "status": "PASS",
+      "duration_ms": 263.03,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F11_002",
+      "feature": "F11",
+      "name": "Driver status OFFLINE not in cell set",
+      "status": "PASS",
+      "duration_ms": 55.17,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F11_003",
+      "feature": "F11",
+      "name": "Driver status BUSY not in cell set",
+      "status": "PASS",
+      "duration_ms": 55.13,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F11_004",
+      "feature": "F11",
+      "name": "Driver transition BUSY -> AVAILABLE restores cell set",
+      "status": "PASS",
+      "duration_ms": 55.04,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F11_005",
+      "feature": "F11",
+      "name": "Stale driver hash lazily pruned from cell set",
+      "status": "PASS",
+      "duration_ms": 55.3,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F12_001",
+      "feature": "F12",
+      "name": "Rapid burst 20 pings ingestion measurement",
+      "status": "PASS",
+      "duration_ms": 0.63,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F12_002",
+      "feature": "F12",
+      "name": "Latency recording list monotonic sorting capability",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F12_003",
+      "feature": "F12",
+      "name": "P50 latency strictly below 10ms SLA threshold",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F12_004",
+      "feature": "F12",
+      "name": "Non-negative latency values",
+      "status": "PASS",
+      "duration_ms": 0.01,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 2",
+      "test_id": "T2_F12_005",
+      "feature": "F12",
+      "name": "High volume latency samples recorded",
+      "status": "PASS",
+      "duration_ms": 0.0,
+      "details": "True",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 3",
+      "test_id": "T3_PW_001",
+      "feature": "F11",
+      "name": "[AVAILABLE x Center] vs [AVAILABLE x Neighbor] (closer wins)",
+      "status": "PASS",
+      "duration_ms": 160.37,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 3",
+      "test_id": "T3_PW_002",
+      "feature": "F11",
+      "name": "[BUSY x Center] vs [AVAILABLE x Neighbor] (neighbor wins)",
+      "status": "PASS",
+      "duration_ms": 160.46,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 3",
+      "test_id": "T3_PW_003",
+      "feature": "F5",
+      "name": "[Boundary Cross] x [Status Transition AVAILABLE -> BUSY]",
+      "status": "PASS",
+      "duration_ms": 110.29,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 3",
+      "test_id": "T3_PW_004",
+      "feature": "F6",
+      "name": "[Ping cessation] x [Concurrent Ride Requests]",
+      "status": "PASS",
+      "duration_ms": 52.38,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 3",
+      "test_id": "T3_PW_005",
+      "feature": "F10",
+      "name": "[High Frequency Pings] x [Multiple Ride Requests]",
+      "status": "PASS",
+      "duration_ms": 105.3,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 3",
+      "test_id": "T3_PW_006",
+      "feature": "F11",
+      "name": "Pairwise Driver Competition [AVAILABLE vs OFFLINE]",
+      "status": "PASS",
+      "duration_ms": 154.82,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 3",
+      "test_id": "T3_PW_007",
+      "feature": "F11",
+      "name": "Pairwise Driver Competition [BUSY vs OFFLINE]",
+      "status": "PASS",
+      "duration_ms": 157.4,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 3",
+      "test_id": "T3_PW_008",
+      "feature": "F11",
+      "name": "Pairwise Driver Competition [AVAILABLE vs BUSY]",
+      "status": "PASS",
+      "duration_ms": 160.29,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 3",
+      "test_id": "T3_PW_009",
+      "feature": "F8",
+      "name": "Pairwise Distance Scaling x Pickup (0.1x)",
+      "status": "PASS",
+      "duration_ms": 158.61,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 3",
+      "test_id": "T3_PW_010",
+      "feature": "F8",
+      "name": "Pairwise Distance Scaling x Pickup (0.5x)",
+      "status": "PASS",
+      "duration_ms": 157.32,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 3",
+      "test_id": "T3_PW_011",
+      "feature": "F8",
+      "name": "Pairwise Distance Scaling x Pickup (0.9x)",
+      "status": "PASS",
+      "duration_ms": 159.12,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 3",
+      "test_id": "T3_PW_012",
+      "feature": "F8",
+      "name": "Pairwise Distance Scaling x Pickup (1.2x)",
+      "status": "PASS",
+      "duration_ms": 155.6,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 3",
+      "test_id": "T3_PW_013",
+      "feature": "F8",
+      "name": "Pairwise Distance Scaling x Pickup (2.0x)",
+      "status": "PASS",
+      "duration_ms": 155.68,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 3",
+      "test_id": "T3_PW_014",
+      "feature": "F8",
+      "name": "Pairwise Distance Scaling x Pickup (5.0x)",
+      "status": "PASS",
+      "duration_ms": 159.88,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 3",
+      "test_id": "T3_PW_015",
+      "feature": "F8",
+      "name": "Pairwise Distance Scaling x Pickup (10.0x)",
+      "status": "PASS",
+      "duration_ms": 159.0,
+      "details": "OK",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 4",
+      "test_id": "T4_FLEET_01",
+      "feature": "FLEET",
+      "name": "15 Drivers Movement & Redis State Verification",
+      "status": "PASS",
+      "duration_ms": 0.14,
+      "details": "All 15 fleet drivers active in SF area with valid H3 cell sets and TTL",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 4",
+      "test_id": "T4_SCN_S01",
+      "feature": "S1",
+      "name": "Single Driver Same-Cell Immediate Match",
+      "status": "PASS",
+      "duration_ms": 158.77,
+      "details": "Matched s1_driver_01 in cell 8828308281fffff (42.5m)",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 4",
+      "test_id": "T4_SCN_S02",
+      "feature": "S2",
+      "name": "Multi-Driver Competitive Match across Hex Cells",
+      "status": "PASS",
+      "duration_ms": 157.74,
+      "details": "Closest Driver B selected across boundary (113.4m < 275.1m)",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 4",
+      "test_id": "T4_SCN_S03",
+      "feature": "S3",
+      "name": "Moving Driver Crossing H3 Boundary Matched in New Cell",
+      "status": "PASS",
+      "duration_ms": 210.73,
+      "details": "Successfully migrated 8828308281fffff -> 8828308283fffff and matched",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 4",
+      "test_id": "T4_SCN_S04",
+      "feature": "S4",
+      "name": "Stale Driver Ping Cessation & Next-Available Match",
+      "status": "PASS",
+      "duration_ms": 1259.84,
+      "details": "Stale s4_driver_stale_ping evicted; matched next available s4_driver_active_ping",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 4",
+      "test_id": "T4_SCN_S05",
+      "feature": "S5",
+      "name": "Concurrent Requests Driver Reservation Mutex",
+      "status": "PASS",
+      "duration_ms": 260.69,
+      "details": "Exactly 1 of 5 concurrent requests reserved driver s5_driver_single_capacity",
+      "error_message": null
+    },
+    {
+      "tier": "Tier 4",
+      "test_id": "T4_SCN_S06",
+      "feature": "S6",
+      "name": "Complete Out-of-Range Request Graceful Skipping",
+      "status": "PASS",
+      "duration_ms": 505.29,
+      "details": "Gracefully ignored without crash or false match",
+      "error_message": null
+    }
+  ]
+}
