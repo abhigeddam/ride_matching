@@ -133,3 +133,14 @@ ride-hailing-system/
 │   │   │       ├── JsonSerde.java
 │   │   │       └── RedisPoolManager.java
 │   │   └── resources/
+│   │       ├── application.properties
+│   │       └── simplelogger.properties
+│   └── test/
+│       └── java/com/ridehailing/
+│           ├── H3SpatialIndexTest.java
+│           ├── HaversineDistanceTest.java
+│           └── DispatchLogicTest.java
+└── simulation/
+    ├── simulate_and_verify.py
+    └── verify.sh
+```
