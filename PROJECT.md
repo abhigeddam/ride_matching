@@ -93,3 +93,43 @@ The system consists of five decoupled layers cooperating via event-driven messag
 - `driver:<driverId>`: Redis Hash containing fields:
   - `lat`: String representing double latitude (e.g. "37.7749")
   - `lon`: String representing double longitude (e.g. "-122.4194")
+  - `status`: String ("AVAILABLE", "OFFERED", "BUSY", "OFFLINE")
+  - `h3_cell`: String (15-char H3 Res 8 hex address)
+  - `last_ping`: String representing millisecond epoch timestamp
+  - TTL: 15 seconds set via `EXPIRE driver:<driverId> 15`
+
+### 3. Spatial Calculation Contracts
+- Uber H3 Resolution: 8. Edge length ~461m.
+- Pickup neighborhood: `h3.gridDisk(pickupCell, 1)` yielding exactly 7 cells (center + 6 neighbors).
+- Haversine distance formula using $R = 6,371,000.0\text{m}$.
+
+## Code Layout
+```
+ride-hailing-system/
+├── docker-compose.yml
+├── pom.xml
+├── README.md
+├── PROJECT.md
+├── TEST_INFRA.md
+├── TEST_READY.md (published by E2E track)
+├── src/
+│   ├── main/
+│   │   ├── java/com/ridehailing/
+│   │   │   ├── model/
+│   │   │   │   ├── DriverLocationPing.java
+│   │   │   │   ├── RideRequest.java
+│   │   │   │   └── RideMatch.java
+│   │   │   ├── spatial/
+│   │   │   │   ├── H3SpatialIndex.java
+│   │   │   │   └── HaversineDistance.java
+│   │   │   ├── flink/
+│   │   │   │   ├── DriverLocationStreamJob.java
+│   │   │   │   ├── GpsValidationFilter.java
+│   │   │   │   └── RedisSpatialSink.java
+│   │   │   ├── dispatch/
+│   │   │   │   ├── RideMatchingService.java
+│   │   │   │   └── CandidateFinder.java
+│   │   │   └── util/
+│   │   │       ├── JsonSerde.java
+│   │   │       └── RedisPoolManager.java
+│   │   └── resources/
