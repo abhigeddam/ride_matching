@@ -58,3 +58,63 @@ A lightweight, production-modeled streaming architecture demonstrating real-time
 
 ---
 
+## 3. Project Structure
+
+```
+ride-hailing-system/
+├── docker-compose.yml              # Single-node Kafka 3.8 (KRaft) & Redis 7
+├── pom.xml                         # Maven build with Flink, H3, Jedis, Kafka
+├── scripts/
+│   ├── start-infra.sh              # Spins up Kafka & Redis in Docker Compose
+│   ├── run-flink-job.sh            # Runs the Flink driver location streaming job
+│   ├── run-matcher.sh              # Runs the Ride Matching dispatch service
+│   ├── run-demo.sh                 # Executes the interactive SF simulation
+│   └── demo-simulation.py          # Python simulation script with visual logs
+└── src/
+    ├── main/java/com/ridehailing/
+    │   ├── model/
+    │   │   ├── DriverLocationPing.java
+    │   │   ├── RideRequest.java
+    │   │   └── RideMatch.java
+    │   ├── spatial/
+    │   │   ├── H3SpatialIndex.java      # Uber H3 Hexagon calculations
+    │   │   └── DistanceCalculator.java  # Haversine distance formula
+    │   ├── flink/
+    │   │   ├── DriverLocationStreamJob.java
+    │   │   ├── DriverLocationDeserializationSchema.java
+    │   │   ├── GpsValidationFilter.java
+    │   │   └── RedisSpatialSink.java
+    │   ├── dispatch/
+    │   │   ├── RideMatchingService.java
+    │   │   └── CandidateFinder.java
+    │   └── util/
+    │       ├── JsonUtil.java
+    │       └── RedisPoolManager.java
+    └── test/java/com/ridehailing/
+        └── spatial/
+            ├── H3SpatialIndexTest.java
+            └── DistanceCalculatorTest.java
+```
+
+---
+
+## 4. Quick Start: Running the System
+
+### Step 1: Start Infrastructure (Kafka & Redis)
+```bash
+./scripts/start-infra.sh
+```
+*Starts Kafka (KRaft mode, port 9092) and Redis (port 6379) in Docker Compose, and automatically provisions topics `driver-locations`, `ride-requests`, and `ride-matches`.*
+
+### Step 2: Build the Java Components
+```bash
+mvn clean package -DskipTests
+```
+*Builds the shaded executable jar at `target/ride-hailing-system-1.0.0.jar`.*
+
+### Step 3: Run the Apache Flink Streaming Job (Terminal 1)
+```bash
+./scripts/run-flink-job.sh
+```
+*Listens to `driver-locations`, calculates H3 cell resolution 8, and updates Redis spatial indexes in real time.*
+
