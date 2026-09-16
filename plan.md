@@ -123,3 +123,31 @@ flowchart TD
   2. Map function: Compute H3 index (resolution 8, $\approx 460\text{m}$ edge length).
   3. Sink function (`RedisSpatialSink`):
      - Remove driver from old H3 cell set (if cell changed).
+     - Add driver to new H3 cell set.
+     - Update `driver:<driverId>` hash with TTL.
+- Test with sample driver pings and verify Redis state updates.
+
+### Phase 4: Match / Dispatch Service (`RideMatchingService`)
+- Read from Kafka topic `ride-requests`.
+- Compute pickup H3 cell + 6 immediate neighbors (`h3.gridDisk(pickupCell, 1)`).
+- Query Redis for active drivers across the 7 cells.
+- Calculate exact Haversine distance between pickup location and each candidate driver.
+- Select the nearest available driver, mark driver as reserved/offered, and publish match to `ride-matches`.
+
+### Phase 5: End-to-End Simulation & Verification
+- Build a Python/Java simulator script:
+  - Generates 10–20 drivers moving within a localized area (e.g., Downtown San Francisco or Bengaluru).
+  - Emits location pings every 3 seconds to Kafka.
+  - Submits 1 or more ride requests to Kafka.
+- Verify that:
+  1. Flink processes pings with $<10\text{ms}$ latency.
+  2. Redis spatial state correctly tracks real-time driver positions.
+  3. The matching service picks the closest driver and outputs to `ride-matches`.
+  4. Stale/offline drivers are excluded.
+
+---
+
+## 4. Next Steps & Iterations (Beyond V1)
+1. **Surge Pricing Aggregations**: Flink sliding window counting supply vs. demand per H3 cell.
+2. **Driver Acceptance State Machine**: 15s countdown for driver acceptance with automatic fallback to runner-up.
+3. **Deadman Switch Timers in Flink**: Proactive emission of `DRIVER_OFFLINE` events if no ping arrives in 15 seconds.
