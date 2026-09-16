@@ -118,3 +118,28 @@ mvn clean package -DskipTests
 ```
 *Listens to `driver-locations`, calculates H3 cell resolution 8, and updates Redis spatial indexes in real time.*
 
+### Step 4: Run the Proximity Dispatch Matcher (Terminal 2)
+```bash
+./scripts/run-matcher.sh
+```
+*Listens to `ride-requests`, evaluates nearest available drivers within the 7-cell H3 neighborhood, and publishes matches to `ride-matches`.*
+
+### Step 5: Run the Interactive Simulation (Terminal 3)
+```bash
+./scripts/run-demo.sh
+```
+*Simulates 5 drivers in San Francisco, submits a rider request at Powell St, inspects the live Redis state, and displays the matched driver with latency.*
+
+---
+
+## 5. Inspecting the System Directly
+
+You can interact with Kafka and Redis using standard CLI tools:
+
+### Inspect Redis State
+```bash
+# View active drivers in a specific H3 hexagon:
+docker exec -it redis redis-cli smembers cell:88283082abfffff:drivers
+
+# View driver telemetry and TTL:
+docker exec -it redis redis-cli hgetall driver:driver_sf_1
