@@ -143,3 +143,8 @@ docker exec -it redis redis-cli smembers cell:88283082abfffff:drivers
 
 # View driver telemetry and TTL:
 docker exec -it redis redis-cli hgetall driver:driver_sf_1
+docker exec -it redis redis-cli ttl driver:driver_sf_1
+```
+
+### Inspect Kafka Topics
+```bash
