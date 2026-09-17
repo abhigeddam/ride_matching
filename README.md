@@ -148,3 +148,9 @@ docker exec -it redis redis-cli ttl driver:driver_sf_1
 
 ### Inspect Kafka Topics
 ```bash
+# Read live match events:
+docker exec -it kafka /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic ride-matches \
+  --from-beginning
+```
